@@ -24,6 +24,8 @@ import {
   X,
   ExternalLink,
   ShoppingBag,
+  Eye,
+  EyeOff,
 } from "lucide-react";
 
 export default function NeuroCommercePage() {
@@ -35,6 +37,7 @@ export default function NeuroCommercePage() {
   const [apiKeyInput, setApiKeyInput] = useState("");
   const [activeApiKey, setActiveApiKey] = useState("");
   const [toastMessage, setToastMessage] = useState<string | null>(null);
+  const [isZenMode, setIsZenMode] = useState(false);
 
   // E-Commerce Cart State
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
@@ -182,125 +185,142 @@ export default function NeuroCommercePage() {
         </div>
       )}
 
-      {/* Top HUD Navigation Bar */}
-      <header className="relative z-40 w-full p-3 sm:p-4 flex flex-col sm:flex-row items-center justify-between gap-3 pointer-events-none">
-        {/* Brand & Live Telemetry Pill */}
-        <div className="flex items-center gap-3 pointer-events-auto">
-          <div className="flex items-center gap-2.5 px-3.5 py-2 rounded-2xl bg-slate-900/80 backdrop-blur-xl border border-slate-700/60 shadow-xl">
-            <div className="w-2.5 h-2.5 rounded-full bg-cyan-400 animate-pulse shadow-[0_0_8px_#22d3ee]" />
-            <div className="flex flex-col">
-              <span className="text-xs font-black tracking-widest uppercase bg-gradient-to-r from-cyan-400 to-teal-300 bg-clip-text text-transparent font-mono">
-                NEUROCOMMERCE AI
-              </span>
-              <span className="text-[9px] text-slate-400 font-mono tracking-tight">
-                GEMINI 1.5 PRO SPATIAL AR
+      {/* Top HUD Navigation Bar (Hidden in Zen Clean View) */}
+      {!isZenMode && (
+        <header className="relative z-40 w-full px-2 sm:px-4 py-2 sm:py-3 flex items-center justify-between gap-1.5 sm:gap-3 pointer-events-none animate-in fade-in duration-200">
+          {/* Brand & Mode Indicator */}
+          <div className="flex items-center gap-2 pointer-events-auto">
+            <div className="flex items-center gap-2 px-2.5 sm:px-3 py-1.5 rounded-2xl bg-slate-900/80 backdrop-blur-xl border border-slate-700/60 shadow-xl">
+              <div className="w-2 h-2 rounded-full bg-cyan-400 animate-pulse shadow-[0_0_8px_#22d3ee]" />
+              <span className="text-[11px] sm:text-xs font-black tracking-widest uppercase bg-gradient-to-r from-cyan-400 to-teal-300 bg-clip-text text-transparent font-mono">
+                NEURO
               </span>
             </div>
+
+            {/* Gemini Mode Indicator (Desktop only) */}
+            <button
+              onClick={() => setIsKeyModalOpen(true)}
+              className={`hidden md:flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl border text-[10px] font-mono transition-all backdrop-blur-md cursor-pointer ${
+                activeApiKey
+                  ? "bg-emerald-950/70 border-emerald-500/50 text-emerald-300"
+                  : "bg-slate-900/70 border-amber-500/40 text-amber-300 hover:border-amber-400"
+              }`}
+            >
+              <Key className="w-3 h-3" />
+              <span>{activeApiKey ? "Live Vision" : "Demo Key"}</span>
+            </button>
           </div>
 
-          {/* Gemini Mode Indicator / Config Button */}
-          <button
-            onClick={() => setIsKeyModalOpen(true)}
-            className={`hidden md:flex items-center gap-1.5 px-3 py-1.5 rounded-xl border text-[11px] font-mono transition-all backdrop-blur-md cursor-pointer ${
-              activeApiKey
-                ? "bg-emerald-950/70 border-emerald-500/50 text-emerald-300"
-                : "bg-slate-900/70 border-amber-500/40 text-amber-300 hover:border-amber-400"
-            }`}
-          >
-            <Key className="w-3 h-3" />
-            <span>{activeApiKey ? "Gemini Live Vision" : "Demo Mode (API Key)"}</span>
-          </button>
+          {/* Right Controls */}
+          <div className="flex items-center gap-1.5 sm:gap-2 pointer-events-auto">
+            {/* Zen Mode: Hide all UI for 100% clean camera passthrough */}
+            <button
+              onClick={() => setIsZenMode(true)}
+              className="p-1.5 sm:px-2.5 sm:py-1.5 rounded-xl bg-slate-900/80 hover:bg-slate-800 text-slate-300 hover:text-white border border-slate-700/60 backdrop-blur-xl shadow-xl transition-all cursor-pointer active:scale-95 flex items-center gap-1"
+              title="Full-Screen Clean Camera View"
+            >
+              <EyeOff className="w-3.5 h-3.5 text-cyan-400" />
+              <span className="hidden md:inline text-[10px] font-mono">Clean View</span>
+            </button>
 
-          {/* Room Context Tag */}
-          <div className="hidden lg:flex items-center gap-2 px-3 py-1.5 rounded-xl bg-slate-900/70 backdrop-blur-md border border-slate-800 text-[11px] font-mono text-slate-300">
-            <Palette className="w-3 h-3 text-cyan-400" />
-            <span className="capitalize">{spatialAnalysis.estimated_room_type.replace("_", " ")}</span>
-            <span className="text-slate-600">|</span>
-            <span className="text-slate-400">{spatialAnalysis.detected_wall_color}</span>
+            {/* Dual Mode Switch (WebXR AR vs 3D Studio) */}
+            <ModeSwitchHUD
+              isStudioMode={isStudioMode}
+              onToggleMode={setIsStudioMode}
+            />
+
+            {/* Day / Night HDRI Lighting Switch (Desktop only) */}
+            <div className="hidden md:block">
+              <LightingToggle
+                currentHdri={currentHdri}
+                onSelectHdri={setCurrentHdri}
+              />
+            </div>
+
+            {/* 15s Room Scan Launcher Button */}
+            <button
+              onClick={() => setIsCameraOpen(true)}
+              className="flex items-center gap-1 px-2.5 sm:px-3 py-1.5 rounded-xl bg-gradient-to-r from-cyan-500 to-teal-400 hover:from-cyan-400 hover:to-teal-300 text-slate-950 font-bold text-xs shadow-[0_0_15px_rgba(6,182,212,0.35)] active:scale-95 transition-all cursor-pointer whitespace-nowrap"
+            >
+              <Camera className="w-3.5 h-3.5" />
+              <span className="font-semibold">{hasScanned ? "Rescan" : "Scan Room"}</span>
+            </button>
+
+            {/* E-Commerce Shopping Cart Button */}
+            <button
+              onClick={() => setIsCartOpen(true)}
+              className="relative p-2 sm:px-2.5 sm:py-1.5 rounded-xl bg-slate-900/80 hover:bg-slate-800 text-slate-200 border border-slate-700/60 backdrop-blur-xl shadow-xl flex items-center gap-1 transition-all cursor-pointer active:scale-95"
+              title="Open Spatial Cart"
+            >
+              <ShoppingBag className="w-3.5 h-3.5 text-cyan-400" />
+              {totalCartCount > 0 && (
+                <span className="w-4 h-4 rounded-full bg-cyan-400 text-slate-950 font-bold text-[9px] font-mono flex items-center justify-center -mr-1 shadow-[0_0_8px_#22d3ee] animate-pulse">
+                  {totalCartCount}
+                </span>
+              )}
+            </button>
+          </div>
+        </header>
+      )}
+
+      {/* Floating Restore UI Pill when in Zen Clean View */}
+      {isZenMode && (
+        <div className="absolute top-3 right-3 z-50 pointer-events-auto animate-in fade-in">
+          <button
+            onClick={() => setIsZenMode(false)}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-slate-900/85 hover:bg-slate-800 text-cyan-300 border border-cyan-500/40 backdrop-blur-xl shadow-2xl text-xs font-mono transition-all active:scale-95"
+          >
+            <Eye className="w-3.5 h-3.5 text-cyan-400" />
+            <span>Show Controls</span>
+          </button>
+        </div>
+      )}
+
+      {/* Floating Spatial Spec Card (Left side on desktop only) */}
+      {!isZenMode && (
+        <div className="hidden lg:flex flex-col gap-2 absolute top-20 left-4 z-20 pointer-events-none">
+          <div className="p-3 rounded-2xl bg-slate-900/80 backdrop-blur-xl border border-slate-700/60 shadow-xl max-w-xs text-xs font-mono">
+            <div className="flex items-center gap-1.5 text-cyan-400 mb-2 font-bold uppercase text-[10px] tracking-wider">
+              <Cpu className="w-3.5 h-3.5" />
+              <span>Spatial Telemetry</span>
+            </div>
+            <div className="space-y-1.5 text-slate-300 text-[11px]">
+              <div className="flex justify-between">
+                <span className="text-slate-500">Target SKU:</span>
+                <span className="text-white font-bold">{selectedProduct.sku_id}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-slate-500">Dimensions:</span>
+                <span>
+                  {selectedProduct.dimensions_meters.width}W × {selectedProduct.dimensions_meters.depth}D × {selectedProduct.dimensions_meters.height}H m
+                </span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-slate-500">Surface Anchor:</span>
+                <span className="text-emerald-400 font-semibold">Interactive Floor Anchor</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-slate-500">Lighting Profile:</span>
+                <span className="text-amber-300 capitalize">{spatialAnalysis.lighting_condition.replace("_", " ")}</span>
+              </div>
+            </div>
           </div>
         </div>
+      )}
 
-        {/* Center / Right Control Cluster */}
-        <div className="flex items-center gap-2 pointer-events-auto">
-          {/* Dual Mode Switch (WebXR AR vs 3D Studio) */}
-          <ModeSwitchHUD
-            isStudioMode={isStudioMode}
-            onToggleMode={setIsStudioMode}
+      {/* Bottom Area: SKU Swiper Carousel (Auto-hidden in Zen Mode) */}
+      {!isZenMode && (
+        <footer className="relative z-30 w-full pointer-events-auto">
+          <BottomSKUCarousel
+            products={products}
+            selectedSkuId={selectedProduct.sku_id}
+            onSelectProduct={(product) => setSelectedProduct(product)}
+            onAddToCart={handleAddToCart}
+            onAddAllBundle={handleAddAllBundle}
+            voiceSummary={voiceSummary}
           />
-
-          {/* Day / Night HDRI Lighting Switch */}
-          <LightingToggle
-            currentHdri={currentHdri}
-            onSelectHdri={setCurrentHdri}
-          />
-
-          {/* 15s Room Scan Launcher Button */}
-          <button
-            onClick={() => setIsCameraOpen(true)}
-            className="flex items-center gap-1.5 px-3.5 py-2 rounded-2xl bg-gradient-to-r from-cyan-500 to-teal-400 hover:from-cyan-400 hover:to-teal-300 text-slate-950 font-bold text-xs shadow-[0_0_20px_rgba(6,182,212,0.35)] active:scale-95 transition-all cursor-pointer"
-          >
-            <Camera className="w-4 h-4" />
-            <span className="font-semibold">{hasScanned ? "Rescan Room" : "Scan Room"}</span>
-          </button>
-
-          {/* E-Commerce Shopping Cart Button */}
-          <button
-            onClick={() => setIsCartOpen(true)}
-            className="relative px-3 py-2 rounded-2xl bg-slate-900/80 hover:bg-slate-800 text-slate-200 border border-slate-700/60 backdrop-blur-xl shadow-xl flex items-center gap-1.5 transition-all cursor-pointer active:scale-95"
-            title="Open Spatial Cart"
-          >
-            <ShoppingBag className="w-4 h-4 text-cyan-400" />
-            <span className="hidden sm:inline text-xs font-semibold">Cart</span>
-            {totalCartCount > 0 && (
-              <span className="w-5 h-5 rounded-full bg-cyan-400 text-slate-950 font-bold text-[10px] font-mono flex items-center justify-center -mr-1 shadow-[0_0_8px_#22d3ee] animate-pulse">
-                {totalCartCount}
-              </span>
-            )}
-          </button>
-        </div>
-      </header>
-
-      {/* Floating Spatial Spec Card (Left side on desktop) */}
-      <div className="hidden lg:flex flex-col gap-2 absolute top-36 left-4 z-20 pointer-events-none">
-        <div className="p-3 rounded-2xl bg-slate-900/80 backdrop-blur-xl border border-slate-700/60 shadow-xl max-w-xs text-xs font-mono">
-          <div className="flex items-center gap-1.5 text-cyan-400 mb-2 font-bold uppercase text-[10px] tracking-wider">
-            <Cpu className="w-3.5 h-3.5" />
-            <span>Spatial Telemetry</span>
-          </div>
-          <div className="space-y-1.5 text-slate-300 text-[11px]">
-            <div className="flex justify-between">
-              <span className="text-slate-500">Target SKU:</span>
-              <span className="text-white font-bold">{selectedProduct.sku_id}</span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-slate-500">Dimensions:</span>
-              <span>
-                {selectedProduct.dimensions_meters.width}W × {selectedProduct.dimensions_meters.depth}D × {selectedProduct.dimensions_meters.height}H m
-              </span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-slate-500">Surface Anchor:</span>
-              <span className="text-emerald-400 font-semibold">Interactive Floor Anchor</span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-slate-500">Lighting Profile:</span>
-              <span className="text-amber-300 capitalize">{spatialAnalysis.lighting_condition.replace("_", " ")}</span>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Bottom Area: SKU Swiper Carousel */}
-      <footer className="relative z-30 w-full pointer-events-auto">
-        <BottomSKUCarousel
-          products={products}
-          selectedSkuId={selectedProduct.sku_id}
-          onSelectProduct={(product) => setSelectedProduct(product)}
-          onAddToCart={handleAddToCart}
-          onAddAllBundle={handleAddAllBundle}
-          voiceSummary={voiceSummary}
-        />
-      </footer>
+        </footer>
+      )}
 
       {/* 15s Room & Voice Capture Modal */}
       <CameraCapture

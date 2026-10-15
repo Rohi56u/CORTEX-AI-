@@ -15,7 +15,7 @@ declare global {
           "camera-orbit"?: string;
           "camera-target"?: string;
           "field-of-view"?: string;
-          "auto-rotate"?: boolean;
+          "auto-rotate"?: boolean | string;
           "auto-rotate-delay"?: string | number;
           "rotation-per-second"?: string;
           "touch-action"?: string;

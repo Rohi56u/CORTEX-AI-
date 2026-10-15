@@ -25,6 +25,7 @@ functions/lib/
 .DS_Store
 *.pem
 certificates/
+*.tsbuildinfo
 
 # IDE
 .idea/

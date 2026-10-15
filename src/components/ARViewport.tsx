@@ -9,12 +9,11 @@ import {
   Unlock,
   Move,
   RotateCw,
-  ZoomIn,
-  ZoomOut,
   Camera,
   CheckCircle2,
   Crosshair,
   AlertTriangle,
+  Scan,
 } from "lucide-react";
 
 interface ARViewportProps {
@@ -52,7 +51,9 @@ export default function ARViewport({
   const [isRequestingCamera, setIsRequestingCamera] = useState(false);
   const [cameraError, setCameraError] = useState<string | null>(null);
 
-  // Interactive Floor Anchor State (percentages of container: 50% X, 65% Y is ideal floor level)
+  // AR Surface Calibration & Placement State
+  // When in AR mode, start unplaced so user can calibrate and choose where to drop the furniture
+  const [isPlaced, setIsPlaced] = useState<boolean>(isStudioMode);
   const [anchor, setAnchor] = useState<{ x: number; y: number }>({ x: 50, y: 65 });
   const [isAnchorLocked, setIsAnchorLocked] = useState(false);
   const [isDraggingAnchor, setIsDraggingAnchor] = useState(false);
@@ -64,6 +65,13 @@ export default function ARViewport({
     import("@google/model-viewer").catch(console.error);
   }, []);
 
+  // When switching to studio mode, automatically mark placed
+  useEffect(() => {
+    if (isStudioMode) {
+      setIsPlaced(true);
+    }
+  }, [isStudioMode]);
+
   // Update anchor position when Gemini AI returns a detected 2D bounding box
   useEffect(() => {
     if (boundingBox) {
@@ -73,6 +81,7 @@ export default function ARViewport({
         x: Math.max(15, Math.min(85, centerX)),
         y: Math.max(35, Math.min(85, centerY)),
       });
+      setIsPlaced(true);
       setIsAnchorLocked(true);
     }
   }, [boundingBox]);
@@ -86,13 +95,13 @@ export default function ARViewport({
       if (typeof navigator !== "undefined" && navigator.mediaDevices?.getUserMedia) {
         let stream: MediaStream | null = null;
         try {
-          // Attempt 1: environment back camera (phones)
+          // Attempt 1: environment back camera (ideal for mobile phones)
           stream = await navigator.mediaDevices.getUserMedia({
             video: { facingMode: { ideal: "environment" }, width: { ideal: 1280 } },
             audio: false,
           });
         } catch (err1) {
-          console.warn("Attempt 1 environment camera failed, trying default/front camera:", err1);
+          console.warn("Attempt 1 environment camera failed, trying fallback camera:", err1);
           // Attempt 2: default/front camera (MacBook FaceTime camera, laptops, desktop webcams)
           stream = await navigator.mediaDevices.getUserMedia({
             video: true,
@@ -263,6 +272,11 @@ export default function ARViewport({
       x: Math.round(Math.max(15, Math.min(85, clickX))),
       y: Math.round(Math.max(35, Math.min(85, clickY))),
     });
+
+    // If not placed yet, this tap places the furniture!
+    if (!isPlaced) {
+      setIsPlaced(true);
+    }
   };
 
   // Drag reticle handle to slide furniture across room floor
@@ -298,17 +312,12 @@ export default function ARViewport({
     setModelRotation((prev) => (prev + delta + 360) % 360);
   };
 
-  const handleScaleChange = (delta: number) => {
-    setModelScale((prev) => {
-      const next = Math.round((prev + delta) * 10) / 10;
-      return Math.max(0.6, Math.min(1.5, next));
-    });
-  };
-
   const handleResetCamera = () => {
     setAnchor({ x: 50, y: 65 });
     setModelRotation(0);
     setModelScale(1.0);
+    setIsPlaced(false);
+    setIsAnchorLocked(false);
     if (modelRef.current) {
       modelRef.current.cameraOrbit = "0deg 75deg 105%";
       modelRef.current.cameraTarget = "auto auto auto";
@@ -345,7 +354,7 @@ export default function ARViewport({
             className={`w-full h-full object-cover ${hasLiveCamera ? "hidden" : "block"}`}
           />
           {/* Subtle AR Passthrough Vignette */}
-          <div className="absolute inset-0 bg-radial-vignette opacity-40" />
+          <div className="absolute inset-0 bg-radial-vignette opacity-35" />
         </div>
       )}
 
@@ -362,8 +371,43 @@ export default function ARViewport({
         />
       )}
 
-      {/* 3. INTERACTIVE GROUND RETICLE & SURFACE ANCHOR (in AR Mode) */}
-      {!isStudioMode && (
+      {/* 3. AR FLOOR CALIBRATION PHASE (Before user places furniture) */}
+      {!isStudioMode && !isPlaced && (
+        <div className="absolute inset-0 z-30 pointer-events-none flex flex-col items-center justify-center">
+          {/* Surface Finding Reticle */}
+          <div
+            style={{
+              left: `${anchor.x}%`,
+              top: `${anchor.y}%`,
+            }}
+            className="absolute -translate-x-1/2 -translate-y-1/2 flex items-center justify-center transition-all duration-150"
+          >
+            <div className="w-32 h-32 border-2 border-dashed border-cyan-400/80 rounded-full animate-spin [animation-duration:10s] flex items-center justify-center shadow-[0_0_20px_rgba(6,182,212,0.4)]">
+              <div className="w-20 h-20 border border-cyan-300 rounded-full animate-ping opacity-30" />
+              <div className="w-3 h-3 bg-cyan-400 rounded-full shadow-[0_0_12px_#22d3ee]" />
+            </div>
+          </div>
+
+          {/* Calibrating Instructions & Tap to Place Banner */}
+          <div className="absolute bottom-28 sm:bottom-32 inset-x-0 mx-auto w-fit px-4 pointer-events-auto flex flex-col items-center gap-2.5 animate-in fade-in slide-in-from-bottom-4">
+            <div className="px-3.5 py-1.5 rounded-full bg-slate-900/90 backdrop-blur-md border border-cyan-500/40 text-[11px] font-mono text-cyan-300 tracking-wider flex items-center gap-2 shadow-xl">
+              <Scan className="w-3.5 h-3.5 text-cyan-400 animate-pulse" />
+              <span>POINT CAMERA AT FLOOR</span>
+            </div>
+
+            <button
+              onClick={() => setIsPlaced(true)}
+              className="px-6 py-3.5 rounded-2xl bg-gradient-to-r from-cyan-500 to-teal-400 hover:from-cyan-400 hover:to-teal-300 text-slate-950 font-bold text-sm shadow-[0_0_30px_rgba(6,182,212,0.6)] active:scale-95 transition-all cursor-pointer flex items-center gap-2 whitespace-nowrap"
+            >
+              <Sparkles className="w-4 h-4" />
+              <span>✦ Tap Floor to Place {productName}</span>
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* 4. GROUND RETICLE (When Placed in AR Mode) */}
+      {!isStudioMode && isPlaced && (
         <div
           onPointerDown={handleReticlePointerDown}
           onPointerMove={handleReticlePointerMove}
@@ -374,81 +418,26 @@ export default function ARViewport({
           }}
           className={`absolute z-10 -translate-x-1/2 -translate-y-1/2 transition-all duration-150 flex flex-col items-center justify-center ${
             isAnchorLocked
-              ? "pointer-events-none"
-              : "pointer-events-auto cursor-grab active:cursor-grabbing"
+              ? "pointer-events-none opacity-40"
+              : "pointer-events-auto cursor-grab active:cursor-grabbing opacity-90"
           }`}
         >
           {/* Ground Contact Shadow Ellipse */}
-          <div className="absolute w-44 h-16 rounded-[100%] bg-black/40 blur-md -z-10 translate-y-3 pointer-events-none" />
+          <div className="absolute w-44 h-16 rounded-[100%] bg-black/45 blur-md -z-10 translate-y-3 pointer-events-none" />
 
-          {/* Dynamic Spatial Ground Reticle */}
+          {/* Minimalist Floor Ring */}
           <div className="relative flex items-center justify-center">
-            {/* Outer Rotating Disc */}
             <div
-              className={`w-28 h-28 border-2 border-dashed rounded-full animate-spin [animation-duration:12s] flex items-center justify-center ${
-                isAnchorLocked ? "border-emerald-400/60" : "border-cyan-400/80 shadow-[0_0_15px_rgba(34,211,238,0.3)]"
-              }`}
-            />
-
-            {/* Inner Pulsing Disc */}
-            <div
-              className={`absolute w-20 h-20 border rounded-full flex items-center justify-center ${
-                isAnchorLocked
-                  ? "border-emerald-400/80 bg-emerald-500/10"
-                  : "border-cyan-300 animate-pulse bg-cyan-500/10"
+              className={`w-24 h-24 border border-dashed rounded-full flex items-center justify-center ${
+                isAnchorLocked ? "border-emerald-400/50" : "border-cyan-400/70 shadow-[0_0_12px_rgba(34,211,238,0.3)]"
               }`}
             >
               <div
-                className={`w-3.5 h-3.5 rounded-full ${
-                  isAnchorLocked
-                    ? "bg-emerald-400 shadow-[0_0_12px_#34d399]"
-                    : "bg-cyan-400 shadow-[0_0_15px_#22d3ee]"
+                className={`w-2.5 h-2.5 rounded-full ${
+                  isAnchorLocked ? "bg-emerald-400" : "bg-cyan-400"
                 }`}
               />
             </div>
-
-            {/* Crosshairs */}
-            <div
-              className={`absolute -top-3.5 w-0.5 h-3.5 ${
-                isAnchorLocked ? "bg-emerald-400" : "bg-cyan-400"
-              }`}
-            />
-            <div
-              className={`absolute -bottom-3.5 w-0.5 h-3.5 ${
-                isAnchorLocked ? "bg-emerald-400" : "bg-cyan-400"
-              }`}
-            />
-            <div
-              className={`absolute -left-3.5 h-0.5 w-3.5 ${
-                isAnchorLocked ? "bg-emerald-400" : "bg-cyan-400"
-              }`}
-            />
-            <div
-              className={`absolute -right-3.5 h-0.5 w-3.5 ${
-                isAnchorLocked ? "bg-emerald-400" : "bg-cyan-400"
-              }`}
-            />
-          </div>
-
-          {/* Anchor Status Badge */}
-          <div
-            className={`mt-3 px-3 py-1 rounded-full backdrop-blur-md border text-[10px] font-mono tracking-wider flex items-center gap-1.5 shadow-xl select-none transition-all ${
-              isAnchorLocked
-                ? "bg-emerald-950/90 border-emerald-500/60 text-emerald-300"
-                : "bg-slate-900/90 border-cyan-500/50 text-cyan-300"
-            }`}
-          >
-            {isAnchorLocked ? (
-              <>
-                <Lock className="w-3 h-3 text-emerald-400" />
-                <span>ANCHORED ON FLOOR [{anchor.x}%, {anchor.y}%]</span>
-              </>
-            ) : (
-              <>
-                <Crosshair className="w-3 h-3 text-cyan-400 animate-spin" />
-                <span>TAP / DRAG TO ANCHOR [{anchor.x}%, {anchor.y}%]</span>
-              </>
-            )}
           </div>
         </div>
       )}
@@ -480,8 +469,8 @@ export default function ARViewport({
         </div>
       )}
 
-      {/* 4. 3D MODEL VIEWER (Hardware-Accelerated Anchored Wrapper) */}
-      {isClient ? (
+      {/* 5. 3D MODEL VIEWER (Only rendered when placed or in studio mode) */}
+      {isClient && (isPlaced || isStudioMode) ? (
         <div
           className="absolute inset-0 z-20 transition-transform duration-200 ease-out pointer-events-auto"
           style={{
@@ -497,12 +486,12 @@ export default function ARViewport({
             ar-modes="webxr scene-viewer quick-look"
             ar-placement="floor"
             ar-scale="auto"
-            interaction-prompt="auto"
+            interaction-prompt="none"
             camera-controls
             orientation={`0deg ${modelRotation}deg 0deg`}
-            auto-rotate={isStudioMode}
-            auto-rotate-delay="1000"
-            rotation-per-second="15deg"
+            auto-rotate={isStudioMode ? "" : undefined}
+            auto-rotate-delay={isStudioMode ? "1000" : undefined}
+            rotation-per-second={isStudioMode ? "15deg" : undefined}
             touch-action="pan-y"
             environment-image={environmentHdri}
             shadow-intensity="1.6"
@@ -516,96 +505,77 @@ export default function ARViewport({
             {!isStudioMode && (
               <button
                 slot="ar-button"
-                className="absolute bottom-44 left-1/2 -translate-x-1/2 z-30 flex items-center gap-2 bg-gradient-to-r from-cyan-500 to-teal-400 hover:from-cyan-400 hover:to-teal-300 text-slate-950 font-bold text-xs sm:text-sm px-5 py-3 rounded-full shadow-[0_0_25px_rgba(6,182,212,0.5)] active:scale-95 transition-all cursor-pointer whitespace-nowrap"
+                className="absolute bottom-24 sm:bottom-28 left-1/2 -translate-x-1/2 z-30 flex items-center gap-2 bg-gradient-to-r from-cyan-500 to-teal-400 hover:from-cyan-400 hover:to-teal-300 text-slate-950 font-bold text-xs sm:text-sm px-4 py-2.5 rounded-full shadow-[0_0_20px_rgba(6,182,212,0.5)] active:scale-95 transition-all cursor-pointer whitespace-nowrap"
               >
-                <Sparkles className="w-4 h-4" />
+                <Sparkles className="w-3.5 h-3.5" />
                 <span>✦ Launch WebXR / Native AR</span>
               </button>
             )}
           </model-viewer>
         </div>
       ) : (
-        <div className="w-full h-full flex items-center justify-center text-slate-500 font-mono text-xs">
-          INITIALIZING SPATIAL VIEWPORT...
-        </div>
+        isClient && !isPlaced && (
+          <div className="pointer-events-none" />
+        )
       )}
 
-      {/* 5. FLOATING SPATIAL ANCHOR CONTROL TOOLBAR (in AR Mode) */}
-      {!isStudioMode && (
+      {/* 6. MINIMALIST BOTTOM-ANCHORED PLACEMENT TOOLBAR (When placed in AR Mode) */}
+      {!isStudioMode && isPlaced && (
         <div
           data-interactive="true"
-          className="absolute top-28 sm:top-24 right-3 sm:right-4 z-30 flex flex-col gap-2 items-end pointer-events-auto"
+          className="absolute bottom-16 sm:bottom-20 inset-x-0 mx-auto w-fit z-30 flex items-center gap-1.5 p-1 rounded-2xl bg-slate-900/85 backdrop-blur-xl border border-slate-700/60 shadow-2xl pointer-events-auto animate-in fade-in slide-in-from-bottom-2"
         >
-          {/* Lock / Unlock Anchor Button */}
+          {/* Rotate Left 45° */}
+          <button
+            onClick={() => handleRotate(-45)}
+            className="p-2 rounded-xl hover:bg-slate-800 text-slate-300 hover:text-white transition-all active:scale-90"
+            title="Rotate -45°"
+          >
+            <RotateCcw className="w-3.5 h-3.5" />
+          </button>
+
+          <span className="text-[10px] font-mono text-cyan-300 font-bold px-1 min-w-[32px] text-center">
+            {modelRotation}°
+          </span>
+
+          {/* Rotate Right 45° */}
+          <button
+            onClick={() => handleRotate(45)}
+            className="p-2 rounded-xl hover:bg-slate-800 text-slate-300 hover:text-white transition-all active:scale-90"
+            title="Rotate +45°"
+          >
+            <RotateCw className="w-3.5 h-3.5" />
+          </button>
+
+          <div className="w-px h-4 bg-slate-700/60 mx-0.5" />
+
+          {/* Lock / Move Toggle */}
           <button
             onClick={() => setIsAnchorLocked((prev) => !prev)}
-            className={`flex items-center gap-2 px-3.5 py-2 rounded-xl backdrop-blur-xl border text-xs font-semibold shadow-xl transition-all cursor-pointer active:scale-95 ${
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold transition-all active:scale-95 ${
               isAnchorLocked
-                ? "bg-emerald-950/80 border-emerald-500/60 text-emerald-300 hover:bg-emerald-900/80 shadow-[0_0_15px_rgba(16,185,129,0.3)]"
-                : "bg-slate-900/85 border-cyan-500/60 text-cyan-300 hover:bg-slate-800 shadow-[0_0_15px_rgba(6,182,212,0.3)]"
+                ? "bg-emerald-500/20 text-emerald-300 border border-emerald-500/40"
+                : "bg-cyan-500/20 text-cyan-300 border border-cyan-500/40"
             }`}
-            title={isAnchorLocked ? "Unlock Anchor to Reposition" : "Lock Anchor to Floor"}
           >
             {isAnchorLocked ? (
               <>
-                <Lock className="w-3.5 h-3.5 text-emerald-400" />
-                <span>Locked to Floor</span>
+                <Lock className="w-3 h-3 text-emerald-400" />
+                <span>Locked</span>
               </>
             ) : (
               <>
-                <Unlock className="w-3.5 h-3.5 text-cyan-400" />
-                <span>Tap Floor to Anchor</span>
+                <Unlock className="w-3 h-3 text-cyan-400" />
+                <span>Move</span>
               </>
             )}
           </button>
 
-          {/* Quick Rotation Buttons */}
-          <div className="flex items-center gap-1 p-1 bg-slate-900/85 backdrop-blur-xl border border-slate-700/60 rounded-xl shadow-xl">
-            <button
-              onClick={() => handleRotate(-45)}
-              className="p-2 rounded-lg hover:bg-slate-800 text-slate-300 hover:text-white transition-all active:scale-90"
-              title="Rotate Counter-Clockwise 45°"
-            >
-              <RotateCcw className="w-3.5 h-3.5" />
-            </button>
-            <span className="text-[10px] font-mono text-cyan-300 px-1 font-bold min-w-[34px] text-center">
-              {modelRotation}°
-            </span>
-            <button
-              onClick={() => handleRotate(45)}
-              className="p-2 rounded-lg hover:bg-slate-800 text-slate-300 hover:text-white transition-all active:scale-90"
-              title="Rotate Clockwise 45°"
-            >
-              <RotateCw className="w-3.5 h-3.5" />
-            </button>
-          </div>
-
-          {/* Quick Scale Controls */}
-          <div className="flex items-center gap-1 p-1 bg-slate-900/85 backdrop-blur-xl border border-slate-700/60 rounded-xl shadow-xl">
-            <button
-              onClick={() => handleScaleChange(-0.1)}
-              className="p-2 rounded-lg hover:bg-slate-800 text-slate-300 hover:text-white transition-all active:scale-90"
-              title="Scale Down"
-            >
-              <ZoomOut className="w-3.5 h-3.5" />
-            </button>
-            <span className="text-[10px] font-mono text-cyan-300 px-1 font-bold min-w-[34px] text-center">
-              {Math.round(modelScale * 100)}%
-            </span>
-            <button
-              onClick={() => handleScaleChange(0.1)}
-              className="p-2 rounded-lg hover:bg-slate-800 text-slate-300 hover:text-white transition-all active:scale-90"
-              title="Scale Up"
-            >
-              <ZoomIn className="w-3.5 h-3.5" />
-            </button>
-          </div>
-
-          {/* Reset View & Anchor Button */}
+          {/* Recalibrate / Pick Up Button */}
           <button
             onClick={handleResetCamera}
-            className="p-2.5 rounded-xl bg-slate-900/85 hover:bg-slate-800 text-slate-300 hover:text-white border border-slate-700/60 backdrop-blur-xl shadow-xl transition-all active:scale-90"
-            title="Reset Floor Anchor & Viewpoint"
+            className="p-2 rounded-xl hover:bg-slate-800 text-slate-400 hover:text-white transition-all active:scale-90"
+            title="Pick Up & Recalibrate"
           >
             <RefreshCw className="w-3.5 h-3.5" />
           </button>
@@ -616,36 +586,19 @@ export default function ARViewport({
       {cameraError && !hasLiveCamera && !isStudioMode && (
         <div
           data-interactive="true"
-          className="absolute top-28 sm:top-24 left-3 sm:left-4 z-40 max-w-xs sm:max-w-sm px-3.5 py-2.5 rounded-2xl bg-slate-900/95 border border-amber-500/50 backdrop-blur-xl text-amber-200 text-xs shadow-2xl flex items-start gap-2.5 animate-in fade-in"
+          className="absolute top-16 left-3 sm:left-4 z-40 max-w-xs px-3 py-2 rounded-xl bg-slate-900/95 border border-amber-500/50 backdrop-blur-xl text-amber-200 text-xs shadow-2xl flex items-start gap-2 animate-in fade-in"
         >
-          <AlertTriangle className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" />
-          <div className="flex-1 space-y-1.5">
-            <p className="text-[11px] leading-relaxed text-amber-200">{cameraError}</p>
+          <AlertTriangle className="w-3.5 h-3.5 text-amber-400 shrink-0 mt-0.5" />
+          <div className="flex-1 space-y-1">
+            <p className="text-[10px] leading-tight text-amber-200">{cameraError}</p>
             <button
               onClick={startCamera}
-              className="px-2.5 py-1 rounded-lg bg-amber-500/20 hover:bg-amber-500/30 border border-amber-400/40 text-[10px] font-mono text-amber-200 flex items-center gap-1.5 active:scale-95 transition-all"
+              className="px-2 py-0.5 rounded bg-amber-500/20 border border-amber-400/40 text-[9px] font-mono text-amber-200 flex items-center gap-1 active:scale-95"
             >
-              <RefreshCw className="w-3 h-3" />
-              <span>Retry Camera</span>
+              <RefreshCw className="w-2.5 h-2.5" />
+              <span>Retry</span>
             </button>
           </div>
-        </div>
-      )}
-
-      {/* Camera Re-Enable Button (if camera is inactive and no error banner) */}
-      {!cameraError && !isStudioMode && !hasLiveCamera && (
-        <div
-          data-interactive="true"
-          className="absolute top-28 sm:top-24 left-3 sm:left-4 z-30 pointer-events-auto"
-        >
-          <button
-            onClick={startCamera}
-            disabled={isRequestingCamera}
-            className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-slate-900/90 hover:bg-slate-800 text-cyan-300 border border-cyan-500/40 text-xs font-mono shadow-xl backdrop-blur-xl transition-all active:scale-95"
-          >
-            <Camera className="w-3.5 h-3.5 text-cyan-400" />
-            <span>{isRequestingCamera ? "Connecting Camera..." : "Enable Live Camera"}</span>
-          </button>
         </div>
       )}
     </div>
