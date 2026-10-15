@@ -505,6 +505,15 @@ export default function ARViewport({
             {!isStudioMode && (
               <button
                 slot="ar-button"
+                onClick={() => {
+                  try {
+                    if (modelRef.current && typeof (modelRef.current as any).activateAR === "function") {
+                      (modelRef.current as any).activateAR();
+                    }
+                  } catch (e) {
+                    console.warn("Failed to activate AR:", e);
+                  }
+                }}
                 className="absolute bottom-24 sm:bottom-28 left-1/2 -translate-x-1/2 z-30 flex items-center gap-2 bg-gradient-to-r from-cyan-500 to-teal-400 hover:from-cyan-400 hover:to-teal-300 text-slate-950 font-bold text-xs sm:text-sm px-4 py-2.5 rounded-full shadow-[0_0_20px_rgba(6,182,212,0.5)] active:scale-95 transition-all cursor-pointer whitespace-nowrap"
               >
                 <Sparkles className="w-3.5 h-3.5" />
