@@ -24,6 +24,7 @@ functions/lib/
 # OS
 .DS_Store
 *.pem
+certificates/
 
 # IDE
 .idea/
