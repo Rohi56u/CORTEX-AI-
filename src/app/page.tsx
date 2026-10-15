@@ -29,7 +29,7 @@ import {
 export default function NeuroCommercePage() {
   const [isStudioMode, setIsStudioMode] = useState(false);
   const [currentHdri, setCurrentHdri] = useState("/hdri/daylight_studio.hdr");
-  const [isCameraOpen, setIsCameraOpen] = useState(true);
+  const [isCameraOpen, setIsCameraOpen] = useState(false);
   const [hasScanned, setHasScanned] = useState(false);
   const [isKeyModalOpen, setIsKeyModalOpen] = useState(false);
   const [apiKeyInput, setApiKeyInput] = useState("");
@@ -261,7 +261,7 @@ export default function NeuroCommercePage() {
       </header>
 
       {/* Floating Spatial Spec Card (Left side on desktop) */}
-      <div className="hidden lg:flex flex-col gap-2 absolute top-24 left-4 z-20 pointer-events-none">
+      <div className="hidden lg:flex flex-col gap-2 absolute top-36 left-4 z-20 pointer-events-none">
         <div className="p-3 rounded-2xl bg-slate-900/80 backdrop-blur-xl border border-slate-700/60 shadow-xl max-w-xs text-xs font-mono">
           <div className="flex items-center gap-1.5 text-cyan-400 mb-2 font-bold uppercase text-[10px] tracking-wider">
             <Cpu className="w-3.5 h-3.5" />
@@ -280,7 +280,7 @@ export default function NeuroCommercePage() {
             </div>
             <div className="flex justify-between">
               <span className="text-slate-500">Surface Anchor:</span>
-              <span className="text-emerald-400 font-semibold">Center Reticle</span>
+              <span className="text-emerald-400 font-semibold">Interactive Floor Anchor</span>
             </div>
             <div className="flex justify-between">
               <span className="text-slate-500">Lighting Profile:</span>
