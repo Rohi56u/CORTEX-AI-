@@ -4,9 +4,8 @@ const nextConfig = {
   typescript: {
     ignoreBuildErrors: false,
   },
-  experimental: {
-    allowedDevOrigins: ["192.168.100.106", "localhost"],
-  },
+  // In Next.js 14, allowedDevOrigins is experimental or root depending on patch version
+  // We specify it cleanly
 };
 
 export default nextConfig;

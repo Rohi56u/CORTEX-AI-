@@ -162,9 +162,9 @@ export default function NeuroCommercePage() {
   const totalCartCount = cartItems.reduce((acc, i) => acc + i.quantity, 0);
 
   return (
-    <main className="relative w-screen h-screen overflow-hidden bg-slate-950 flex flex-col justify-between">
+    <main className="fixed inset-0 w-full h-[100dvh] overflow-hidden bg-slate-950 flex flex-col justify-between pt-[env(safe-area-inset-top,0px)] pb-[env(safe-area-inset-bottom,0px)] pl-[env(safe-area-inset-left,0px)] pr-[env(safe-area-inset-right,0px)]">
       {/* Background 3D / WebXR Viewport */}
-      <div className="absolute inset-0 z-0">
+      <div className="absolute inset-0 z-0 w-full h-full">
         <ARViewport
           glbUrl={selectedProduct.model_glb_path}
           usdzUrl={selectedProduct.model_usdz_path}
@@ -177,9 +177,9 @@ export default function NeuroCommercePage() {
 
       {/* Floating Success Toast */}
       {toastMessage && (
-        <div className="absolute top-16 sm:top-20 inset-x-0 mx-auto w-fit z-50 animate-in fade-in slide-in-from-top-4 duration-300">
-          <div className="px-4 py-2.5 rounded-2xl bg-slate-900/90 border border-cyan-400/80 shadow-[0_0_25px_rgba(6,182,212,0.4)] backdrop-blur-xl flex items-center gap-2 text-xs font-semibold text-white">
-            <Sparkles className="w-4 h-4 text-cyan-400 animate-spin" />
+        <div className="absolute top-14 sm:top-16 inset-x-0 mx-auto w-fit z-50 animate-in fade-in slide-in-from-top-4 duration-300">
+          <div className="px-3.5 py-2 rounded-2xl bg-slate-900/90 border border-cyan-400/80 shadow-[0_0_25px_rgba(6,182,212,0.4)] backdrop-blur-xl flex items-center gap-2 text-xs font-semibold text-white">
+            <Sparkles className="w-3.5 h-3.5 text-cyan-400 animate-spin" />
             <span>{toastMessage}</span>
           </div>
         </div>
@@ -187,10 +187,10 @@ export default function NeuroCommercePage() {
 
       {/* Top HUD Navigation Bar (Hidden in Zen Clean View) */}
       {!isZenMode && (
-        <header className="relative z-40 w-full px-2 sm:px-4 py-2 sm:py-3 flex items-center justify-between gap-1.5 sm:gap-3 pointer-events-none animate-in fade-in duration-200">
+        <header className="relative z-40 w-full px-2 sm:px-4 py-1.5 sm:py-2.5 flex items-center justify-between gap-1 pointer-events-none animate-in fade-in duration-200">
           {/* Brand & Mode Indicator */}
-          <div className="flex items-center gap-2 pointer-events-auto">
-            <div className="flex items-center gap-2 px-2.5 sm:px-3 py-1.5 rounded-2xl bg-slate-900/80 backdrop-blur-xl border border-slate-700/60 shadow-xl">
+          <div className="flex items-center gap-1.5 pointer-events-auto shrink-0">
+            <div className="flex items-center gap-1.5 px-2 sm:px-2.5 py-1 rounded-xl sm:rounded-2xl bg-slate-900/80 backdrop-blur-xl border border-slate-700/60 shadow-xl">
               <div className="w-2 h-2 rounded-full bg-cyan-400 animate-pulse shadow-[0_0_8px_#22d3ee]" />
               <span className="text-[11px] sm:text-xs font-black tracking-widest uppercase bg-gradient-to-r from-cyan-400 to-teal-300 bg-clip-text text-transparent font-mono">
                 NEURO
@@ -200,7 +200,7 @@ export default function NeuroCommercePage() {
             {/* Gemini Mode Indicator (Desktop only) */}
             <button
               onClick={() => setIsKeyModalOpen(true)}
-              className={`hidden md:flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl border text-[10px] font-mono transition-all backdrop-blur-md cursor-pointer ${
+              className={`hidden lg:flex items-center gap-1 px-2.5 py-1 rounded-xl border text-[10px] font-mono transition-all backdrop-blur-md cursor-pointer ${
                 activeApiKey
                   ? "bg-emerald-950/70 border-emerald-500/50 text-emerald-300"
                   : "bg-slate-900/70 border-amber-500/40 text-amber-300 hover:border-amber-400"
@@ -212,7 +212,7 @@ export default function NeuroCommercePage() {
           </div>
 
           {/* Right Controls */}
-          <div className="flex items-center gap-1.5 sm:gap-2 pointer-events-auto">
+          <div className="flex items-center gap-1 sm:gap-1.5 pointer-events-auto shrink-0">
             {/* Zen Mode: Hide all UI for 100% clean camera passthrough */}
             <button
               onClick={() => setIsZenMode(true)}
@@ -220,7 +220,7 @@ export default function NeuroCommercePage() {
               title="Full-Screen Clean Camera View"
             >
               <EyeOff className="w-3.5 h-3.5 text-cyan-400" />
-              <span className="hidden md:inline text-[10px] font-mono">Clean View</span>
+              <span className="hidden md:inline text-[10px] font-mono">Clean</span>
             </button>
 
             {/* Dual Mode Switch (WebXR AR vs 3D Studio) */}
@@ -243,13 +243,13 @@ export default function NeuroCommercePage() {
               className="flex items-center gap-1 px-2.5 sm:px-3 py-1.5 rounded-xl bg-gradient-to-r from-cyan-500 to-teal-400 hover:from-cyan-400 hover:to-teal-300 text-slate-950 font-bold text-xs shadow-[0_0_15px_rgba(6,182,212,0.35)] active:scale-95 transition-all cursor-pointer whitespace-nowrap"
             >
               <Camera className="w-3.5 h-3.5" />
-              <span className="font-semibold">{hasScanned ? "Rescan" : "Scan Room"}</span>
+              <span className="text-xs font-semibold">{hasScanned ? "Rescan" : "Scan"}</span>
             </button>
 
             {/* E-Commerce Shopping Cart Button */}
             <button
               onClick={() => setIsCartOpen(true)}
-              className="relative p-2 sm:px-2.5 sm:py-1.5 rounded-xl bg-slate-900/80 hover:bg-slate-800 text-slate-200 border border-slate-700/60 backdrop-blur-xl shadow-xl flex items-center gap-1 transition-all cursor-pointer active:scale-95"
+              className="relative p-1.5 sm:px-2.5 sm:py-1.5 rounded-xl bg-slate-900/80 hover:bg-slate-800 text-slate-200 border border-slate-700/60 backdrop-blur-xl shadow-xl flex items-center gap-1 transition-all cursor-pointer active:scale-95"
               title="Open Spatial Cart"
             >
               <ShoppingBag className="w-3.5 h-3.5 text-cyan-400" />

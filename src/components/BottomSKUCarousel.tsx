@@ -34,7 +34,7 @@ export default function BottomSKUCarousel({
   voiceSummary,
 }: BottomSKUCarouselProps) {
   const [addedSku, setAddedSku] = useState<string | null>(null);
-  const [isCollapsed, setIsCollapsed] = useState(false);
+  const [isCollapsed, setIsCollapsed] = useState(true);
   const [showVoiceCard, setShowVoiceCard] = useState(true);
 
   const selectedProduct = products.find((p) => p.sku_id === selectedSkuId) || products[0];
