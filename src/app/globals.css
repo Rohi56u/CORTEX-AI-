@@ -1,0 +1,39 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --background: #020617;
+  --foreground: #f8fafc;
+}
+
+body {
+  color: var(--foreground);
+  background: var(--background);
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  overflow-x: hidden;
+  user-select: none;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Custom Model Viewer Defaults */
+model-viewer {
+  --poster-color: transparent;
+  width: 100%;
+  height: 100%;
+  outline: none;
+}
+
+/* Subtle AR Vignette */
+.bg-radial-vignette {
+  background: radial-gradient(circle at center, transparent 40%, rgba(2, 6, 23, 0.8) 100%);
+}
+
+/* Hide scrollbars for carousel */
+.scrollbar-none::-webkit-scrollbar {
+  display: none;
+}
+.scrollbar-none {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
