@@ -135,31 +135,79 @@ export default function ARViewport({
     }
   }, [isStudioMode]);
 
+  const stopCamera = useCallback(() => {
+    if (mediaStreamRef.current) {
+      mediaStreamRef.current.getTracks().forEach((t) => {
+        try {
+          t.stop();
+        } catch (e) {
+          console.warn("Track stop error:", e);
+        }
+      });
+      mediaStreamRef.current = null;
+    }
+    if (videoRef.current) {
+      videoRef.current.srcObject = null;
+    }
+    if (animFrameRef.current) {
+      cancelAnimationFrame(animFrameRef.current);
+    }
+    setHasLiveCamera(false);
+  }, []);
+
   useEffect(() => {
     if (isStudioMode) {
-      if (mediaStreamRef.current) {
-        mediaStreamRef.current.getTracks().forEach((t) => t.stop());
-        mediaStreamRef.current = null;
-      }
-      if (animFrameRef.current) {
-        cancelAnimationFrame(animFrameRef.current);
-      }
-      setHasLiveCamera(false);
+      stopCamera();
       return;
     }
 
     startCamera();
 
     return () => {
-      if (mediaStreamRef.current) {
-        mediaStreamRef.current.getTracks().forEach((t) => t.stop());
-        mediaStreamRef.current = null;
-      }
-      if (animFrameRef.current) {
-        cancelAnimationFrame(animFrameRef.current);
+      stopCamera();
+    };
+  }, [isStudioMode, startCamera, stopCamera]);
+
+  // Handle system visibility and native AR session lifecycle to release/resume camera hardware
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === "visible") {
+        // User returned to browser (e.g. dismissed Apple AR QuickLook sheet)
+        if (!isStudioMode && !mediaStreamRef.current) {
+          startCamera();
+        }
+      } else if (document.visibilityState === "hidden") {
+        // QuickLook or another app took foreground: release camera hardware immediately
+        stopCamera();
       }
     };
-  }, [isStudioMode, startCamera]);
+
+    const modelEl = modelRef.current;
+    const handleARStatus = (event: any) => {
+      const status = event.detail?.status;
+      if (status === "session-started") {
+        // Native AR session opened: release web passthrough camera
+        stopCamera();
+      } else if (status === "not-presenting" || status === "failed") {
+        // Native AR session closed: resume web passthrough camera
+        if (!isStudioMode) {
+          startCamera();
+        }
+      }
+    };
+
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+    if (modelEl) {
+      modelEl.addEventListener("ar-status", handleARStatus);
+    }
+
+    return () => {
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+      if (modelEl) {
+        modelEl.removeEventListener("ar-status", handleARStatus);
+      }
+    };
+  }, [isStudioMode, startCamera, stopCamera]);
 
   // 2. Fallback Animated Spatial LiDAR Simulator (if camera is blocked or plain HTTP)
   useEffect(() => {
@@ -506,13 +554,8 @@ export default function ARViewport({
               <button
                 slot="ar-button"
                 onClick={() => {
-                  try {
-                    if (modelRef.current && typeof (modelRef.current as any).activateAR === "function") {
-                      (modelRef.current as any).activateAR();
-                    }
-                  } catch (e) {
-                    console.warn("Failed to activate AR:", e);
-                  }
+                  // Release the webpage camera stream immediately so iOS ARKit QuickLook has exclusive camera access!
+                  stopCamera();
                 }}
                 className="absolute bottom-24 sm:bottom-28 left-1/2 -translate-x-1/2 z-30 flex items-center gap-2 bg-gradient-to-r from-cyan-500 to-teal-400 hover:from-cyan-400 hover:to-teal-300 text-slate-950 font-bold text-xs sm:text-sm px-4 py-2.5 rounded-full shadow-[0_0_20px_rgba(6,182,212,0.5)] active:scale-95 transition-all cursor-pointer whitespace-nowrap"
               >
