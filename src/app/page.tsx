@@ -183,7 +183,7 @@ export default function NeuroCommercePage() {
       )}
 
       {/* Top HUD Navigation Bar */}
-      <header className="relative z-30 w-full p-3 sm:p-4 flex flex-col sm:flex-row items-center justify-between gap-3 pointer-events-none">
+      <header className="relative z-40 w-full p-3 sm:p-4 flex flex-col sm:flex-row items-center justify-between gap-3 pointer-events-none">
         {/* Brand & Live Telemetry Pill */}
         <div className="flex items-center gap-3 pointer-events-auto">
           <div className="flex items-center gap-2.5 px-3.5 py-2 rounded-2xl bg-slate-900/80 backdrop-blur-xl border border-slate-700/60 shadow-xl">

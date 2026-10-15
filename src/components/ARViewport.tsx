@@ -14,6 +14,7 @@ import {
   Camera,
   CheckCircle2,
   Crosshair,
+  AlertTriangle,
 } from "lucide-react";
 
 interface ARViewportProps {
@@ -49,6 +50,7 @@ export default function ARViewport({
   const [modelLoaded, setModelLoaded] = useState(false);
   const [hasLiveCamera, setHasLiveCamera] = useState(false);
   const [isRequestingCamera, setIsRequestingCamera] = useState(false);
+  const [cameraError, setCameraError] = useState<string | null>(null);
 
   // Interactive Floor Anchor State (percentages of container: 50% X, 65% Y is ideal floor level)
   const [anchor, setAnchor] = useState<{ x: number; y: number }>({ x: 50, y: 65 });
@@ -81,33 +83,43 @@ export default function ARViewport({
     setIsRequestingCamera(true);
 
     try {
-      if (navigator.mediaDevices?.getUserMedia) {
-        const stream = await navigator.mediaDevices.getUserMedia({
-          video: { facingMode: { ideal: "environment" }, width: { ideal: 1280 } },
-          audio: false,
-        });
+      if (typeof navigator !== "undefined" && navigator.mediaDevices?.getUserMedia) {
+        let stream: MediaStream | null = null;
+        try {
+          // Attempt 1: environment back camera (phones)
+          stream = await navigator.mediaDevices.getUserMedia({
+            video: { facingMode: { ideal: "environment" }, width: { ideal: 1280 } },
+            audio: false,
+          });
+        } catch (err1) {
+          console.warn("Attempt 1 environment camera failed, trying default/front camera:", err1);
+          // Attempt 2: default/front camera (MacBook FaceTime camera, laptops, desktop webcams)
+          stream = await navigator.mediaDevices.getUserMedia({
+            video: true,
+            audio: false,
+          });
+        }
 
-        mediaStreamRef.current = stream;
-        if (videoRef.current) {
-          videoRef.current.srcObject = stream;
-          await videoRef.current.play().catch(() => {});
+        if (stream) {
+          mediaStreamRef.current = stream;
+          if (videoRef.current) {
+            videoRef.current.srcObject = stream;
+            await videoRef.current.play().catch((playErr) => console.warn("Video play error:", playErr));
+          }
+          setHasLiveCamera(true);
+          setCameraError(null);
         }
-        setHasLiveCamera(true);
-      }
-    } catch (err1) {
-      try {
-        const stream2 = await navigator.mediaDevices.getUserMedia({
-          video: true,
-          audio: false,
-        });
-        mediaStreamRef.current = stream2;
-        if (videoRef.current) {
-          videoRef.current.srcObject = stream2;
-          await videoRef.current.play().catch(() => {});
-        }
-        setHasLiveCamera(true);
-      } catch (err2) {
+      } else {
+        setCameraError("Camera API not supported in this browser");
         setHasLiveCamera(false);
+      }
+    } catch (err: any) {
+      console.warn("Camera access failed or blocked:", err);
+      setHasLiveCamera(false);
+      if (err.name === "NotAllowedError" || err.name === "PermissionDeniedError") {
+        setCameraError("Camera permission blocked in browser. Click the lock/camera icon in your address bar to allow.");
+      } else {
+        setCameraError(err.message || "Could not access camera.");
       }
     } finally {
       setIsRequestingCamera(false);
@@ -522,7 +534,7 @@ export default function ARViewport({
       {!isStudioMode && (
         <div
           data-interactive="true"
-          className="absolute top-20 right-3 sm:right-4 z-30 flex flex-col gap-2 items-end pointer-events-auto"
+          className="absolute top-28 sm:top-24 right-3 sm:right-4 z-30 flex flex-col gap-2 items-end pointer-events-auto"
         >
           {/* Lock / Unlock Anchor Button */}
           <button
@@ -600,11 +612,31 @@ export default function ARViewport({
         </div>
       )}
 
-      {/* Camera Re-Enable Button (if camera is inactive or blocked) */}
-      {!isStudioMode && !hasLiveCamera && (
+      {/* Camera Error / Permission Notice */}
+      {cameraError && !hasLiveCamera && !isStudioMode && (
         <div
           data-interactive="true"
-          className="absolute top-20 left-3 sm:left-4 z-30 pointer-events-auto"
+          className="absolute top-28 sm:top-24 left-3 sm:left-4 z-40 max-w-xs sm:max-w-sm px-3.5 py-2.5 rounded-2xl bg-slate-900/95 border border-amber-500/50 backdrop-blur-xl text-amber-200 text-xs shadow-2xl flex items-start gap-2.5 animate-in fade-in"
+        >
+          <AlertTriangle className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" />
+          <div className="flex-1 space-y-1.5">
+            <p className="text-[11px] leading-relaxed text-amber-200">{cameraError}</p>
+            <button
+              onClick={startCamera}
+              className="px-2.5 py-1 rounded-lg bg-amber-500/20 hover:bg-amber-500/30 border border-amber-400/40 text-[10px] font-mono text-amber-200 flex items-center gap-1.5 active:scale-95 transition-all"
+            >
+              <RefreshCw className="w-3 h-3" />
+              <span>Retry Camera</span>
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Camera Re-Enable Button (if camera is inactive and no error banner) */}
+      {!cameraError && !isStudioMode && !hasLiveCamera && (
+        <div
+          data-interactive="true"
+          className="absolute top-28 sm:top-24 left-3 sm:left-4 z-30 pointer-events-auto"
         >
           <button
             onClick={startCamera}
