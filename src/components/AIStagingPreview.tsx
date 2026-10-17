@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { SuggestedProduct } from "../types/neurocommerce";
 import {
   Sparkles,
@@ -37,6 +37,12 @@ export default function AIStagingPreview({
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [showOriginal, setShowOriginal] = useState(false);
   const [isAdded, setIsAdded] = useState(false);
+
+  useEffect(() => {
+    setStagedImage(null);
+    setErrorMessage(null);
+    setShowOriginal(false);
+  }, [product.sku_id]);
 
   const handleGenerateStaging = async () => {
     setIsLoading(true);

@@ -212,24 +212,48 @@ export default function NeuroCommercePage() {
   // Conversational In-Viewport AI Query Handler
   const handleSearchQuery = useCallback((query: string) => {
     setIsQueryProcessing(true);
-    const q = query.toLowerCase();
+    const q = query.toLowerCase().trim();
 
-    // Check budget limit in query (e.g. "under 600", "under $800")
-    const priceMatch = q.match(/under\s*\$?(\d+)/i);
+    // Check budget limit in query (e.g. "under 600", "under $800", "below 500", "< 700")
+    const priceMatch = q.match(/(?:under|below|less\s+than|<\s*)\s*\$?(\d+)/i);
     const maxPrice = priceMatch ? parseInt(priceMatch[1], 10) : Infinity;
 
-    // Filter catalog
-    let matched = CATALOG_PRODUCTS.filter((p) => {
-      if (p.price_bundle > maxPrice) return false;
-      const terms = [
-        p.item_name.toLowerCase(),
-        p.category.toLowerCase(),
-        p.room_type?.toLowerCase() || "",
-        p.reasoning.toLowerCase(),
-        ...(p.available_finishes || []).map((f) => f.name.toLowerCase()),
-      ].join(" ");
-      return q.split(" ").some((w) => w.length > 2 && terms.includes(w));
-    });
+    // Filter out filler words for precise keyword scoring
+    const stopWords = new Set([
+      "show", "find", "give", "want", "need", "with", "under", "below",
+      "less", "than", "the", "for", "me", "a", "an", "some", "looking", "please"
+    ]);
+    const queryTokens = q
+      .replace(/[^a-z0-9\s]/g, " ")
+      .split(/\s+/)
+      .filter((w) => w.length > 1 && !stopWords.has(w));
+
+    // Score and rank catalog items
+    const scored = CATALOG_PRODUCTS.filter((p) => p.price_bundle <= maxPrice)
+      .map((p) => {
+        const itemText = [
+          p.item_name.toLowerCase(),
+          p.category.toLowerCase(),
+          p.room_type?.toLowerCase() || "",
+          p.reasoning.toLowerCase(),
+          ...(p.available_finishes || []).map((f) => f.name.toLowerCase()),
+        ].join(" ");
+
+        let score = 0;
+        for (const token of queryTokens) {
+          if (itemText.includes(token)) {
+            if (p.item_name.toLowerCase().includes(token)) score += 4;
+            else if (p.category.toLowerCase().includes(token)) score += 3;
+            else if ((p.room_type || "").toLowerCase().includes(token)) score += 2;
+            else score += 1;
+          }
+        }
+        return { product: p, score };
+      })
+      .filter((item) => (queryTokens.length > 0 ? item.score > 0 : true))
+      .sort((a, b) => b.score - a.score);
+
+    let matched = scored.map((s) => s.product);
 
     if (matched.length === 0) {
       matched = CATALOG_PRODUCTS.filter((p) => p.price_bundle <= maxPrice);
@@ -237,7 +261,6 @@ export default function NeuroCommercePage() {
 
     if (matched.length > 0) {
       const primary = matched[0];
-      const alternatives = matched.slice(1, 8);
       setRecommendedProducts(matched.slice(0, 8));
       handleSelectProduct(primary);
 
@@ -528,6 +551,7 @@ export default function NeuroCommercePage() {
         onUpdateQuantity={handleUpdateQuantity}
         onRemoveItem={handleRemoveItem}
         onAddAllBundle={handleAddAllBundle}
+        onClearCart={() => setCartItems([])}
         roomType={spatialAnalysis.estimated_room_type.replace("_", " ")}
       />
 

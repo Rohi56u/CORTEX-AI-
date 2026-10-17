@@ -30,6 +30,7 @@ interface CartDrawerProps {
   onUpdateQuantity: (skuId: string, delta: number) => void;
   onRemoveItem: (skuId: string) => void;
   onAddAllBundle: () => void;
+  onClearCart?: () => void;
   roomType?: string;
 }
 
@@ -41,6 +42,7 @@ export default function CartDrawer({
   onUpdateQuantity,
   onRemoveItem,
   onAddAllBundle,
+  onClearCart,
   roomType = "living room",
 }: CartDrawerProps) {
   const [step, setStep] = useState<"cart" | "checkout" | "confirmed">("cart");
@@ -70,9 +72,10 @@ export default function CartDrawer({
   );
   const totalSavings = Math.max(0, subtotalOriginal - subtotalBundle);
 
+  const suiteKeyItems = allProducts.slice(0, Math.min(3, allProducts.length));
   const isFullRoomBundle =
     items.length >= 2 &&
-    allProducts.every((p) => items.some((i) => i.product.sku_id === p.sku_id));
+    suiteKeyItems.every((p) => items.some((i) => i.product.sku_id === p.sku_id));
 
   const handleProceedToDelivery = () => {
     setStep("checkout");
@@ -106,6 +109,7 @@ export default function CartDrawer({
     setTimeout(() => {
       setIsSubmitting(false);
       setStep("confirmed");
+      if (onClearCart) onClearCart();
     }, 1200);
   };
 

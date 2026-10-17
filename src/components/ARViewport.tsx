@@ -94,13 +94,27 @@ export default function ARViewport({
     if (!modelRef.current) return;
     setIsCapturing(true);
     try {
-      const dataUrl = modelRef.current.toDataURL("image/png");
-      const a = document.createElement("a");
-      a.href = dataUrl;
-      a.download = `${productName.toLowerCase().replace(/\s+/g, "_")}_cortex3d.png`;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
+      let downloadUrl = "";
+      if (typeof modelRef.current.toBlob === "function") {
+        const blob = await modelRef.current.toBlob({ mimeType: "image/png" });
+        if (blob) {
+          downloadUrl = URL.createObjectURL(blob);
+        }
+      }
+      if (!downloadUrl && typeof modelRef.current.toDataURL === "function") {
+        downloadUrl = modelRef.current.toDataURL("image/png");
+      }
+      if (downloadUrl) {
+        const a = document.createElement("a");
+        a.href = downloadUrl;
+        a.download = `${productName.toLowerCase().replace(/\s+/g, "_")}_cortex3d.png`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        if (downloadUrl.startsWith("blob:")) {
+          setTimeout(() => URL.revokeObjectURL(downloadUrl), 2000);
+        }
+      }
     } catch (e) {
       console.warn("Snapshot export error:", e);
     } finally {
@@ -123,10 +137,13 @@ export default function ARViewport({
       } catch (e) {}
     };
     el.addEventListener("load", onLoad);
+    if (el.model) {
+      applyMaterialColor();
+    }
     return () => {
       el.removeEventListener("load", onLoad);
     };
-  }, [applyMaterialColor]);
+  }, [glbUrl, applyMaterialColor]);
 
   useEffect(() => {
     handleResetCamera();
@@ -202,7 +219,7 @@ export default function ARViewport({
               {/* Width Hotspot (Top edge) */}
               <button
                 slot="hotspot-dim-width"
-                data-position="0 0.85 0"
+                data-position={`0 ${Math.max(0.45, dimensions.height)} 0`}
                 data-normal="0 1 0"
                 className="px-2 py-0.5 rounded-md bg-slate-900/90 border border-cyan-400/80 text-cyan-300 text-[10px] font-mono shadow-xl backdrop-blur-md pointer-events-none flex items-center gap-1"
               >
@@ -212,7 +229,7 @@ export default function ARViewport({
               {/* Height Hotspot (Right edge) */}
               <button
                 slot="hotspot-dim-height"
-                data-position="0.5 0.45 0"
+                data-position={`${Math.max(0.3, dimensions.width / 2)} ${dimensions.height / 2} 0`}
                 data-normal="1 0 0"
                 className="px-2 py-0.5 rounded-md bg-slate-900/90 border border-emerald-400/80 text-emerald-300 text-[10px] font-mono shadow-xl backdrop-blur-md pointer-events-none flex items-center gap-1"
               >
@@ -222,7 +239,7 @@ export default function ARViewport({
               {/* Depth Hotspot (Floor depth) */}
               <button
                 slot="hotspot-dim-depth"
-                data-position="0 0.05 0.45"
+                data-position={`0 0.05 ${Math.max(0.3, dimensions.depth / 2)}`}
                 data-normal="0 0 1"
                 className="px-2 py-0.5 rounded-md bg-slate-900/90 border border-amber-400/80 text-amber-300 text-[10px] font-mono shadow-xl backdrop-blur-md pointer-events-none flex items-center gap-1"
               >

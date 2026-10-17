@@ -188,6 +188,8 @@ export default function BottomSKUCarousel({
               { id: "bedroom", label: "Bedroom" },
               { id: "dining", label: "Dining" },
               { id: "office", label: "Office" },
+              { id: "seating", label: "Seating" },
+              { id: "tables", label: "Tables" },
               { id: "storage", label: "Storage" },
               { id: "lighting", label: "Lighting" },
               { id: "decor", label: "Decor" },
@@ -281,7 +283,9 @@ export default function BottomSKUCarousel({
                                   type="button"
                                   onClick={(e) => {
                                     e.stopPropagation();
-                                    onSelectProduct(product);
+                                    if (selectedSkuId !== product.sku_id) {
+                                      onSelectProduct(product);
+                                    }
                                     if (onSelectFinish) {
                                       onSelectFinish(product, f);
                                     }

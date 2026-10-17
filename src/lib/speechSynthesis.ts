@@ -9,6 +9,12 @@ export class SpatialSpeechEngine {
   private constructor() {
     if (typeof window !== "undefined" && "speechSynthesis" in window) {
       this.synthesis = window.speechSynthesis;
+      // Pre-warm voices list on Chromium
+      if (typeof window.speechSynthesis.onvoiceschanged !== "undefined") {
+        window.speechSynthesis.onvoiceschanged = () => {
+          this.synthesis?.getVoices();
+        };
+      }
       // Load preference from localStorage
       const savedMute = localStorage.getItem("NEUROCOMMERCE_VOICE_MUTED");
       if (savedMute !== null) {

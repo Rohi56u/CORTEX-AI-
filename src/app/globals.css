@@ -45,3 +45,14 @@ model-viewer {
   -ms-overflow-style: none;
   scrollbar-width: none;
 }
+
+/* Print support for delivery receipts and order vouchers */
+@media print {
+  html,
+  body {
+    position: static !important;
+    overflow: visible !important;
+    height: auto !important;
+    user-select: auto !important;
+  }
+}

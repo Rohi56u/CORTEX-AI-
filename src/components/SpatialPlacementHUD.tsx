@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { SuggestedProduct, BoundingBox2D } from "../types/neurocommerce";
 import {
   MapPin,
@@ -33,6 +33,10 @@ export default function SpatialPlacementHUD({
   onSwitchTo3D,
 }: SpatialPlacementHUDProps) {
   const [activeSkuId, setActiveSkuId] = useState<string>(primaryProduct.sku_id);
+
+  useEffect(() => {
+    setActiveSkuId(primaryProduct.sku_id);
+  }, [primaryProduct.sku_id]);
 
   const allItems = [primaryProduct, ...alternativeProducts];
   const activeItem =
