@@ -513,7 +513,10 @@ export default function CameraCapture({
       }
 
       const result: NeuroCommerceAIResponse = await response.json();
-      onAnalysisComplete(result);
+      onAnalysisComplete({
+        ...result,
+        captured_room_image: imagesToSend[0],
+      });
       onClose();
     } catch (err: any) {
       console.error(err);

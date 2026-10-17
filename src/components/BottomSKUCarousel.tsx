@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { SuggestedProduct } from "../types/neurocommerce";
 import {
   Tag,
@@ -18,26 +18,60 @@ import {
 
 interface BottomSKUCarouselProps {
   products: SuggestedProduct[];
+  recommendedProducts?: SuggestedProduct[];
   selectedSkuId: string;
   onSelectProduct: (product: SuggestedProduct) => void;
   onAddToCart?: (product: SuggestedProduct) => void;
   onAddAllBundle?: () => void;
   voiceSummary?: string;
+  viewportMode?: "3d" | "placement" | "staging";
 }
 
 export default function BottomSKUCarousel({
   products,
+  recommendedProducts = [],
   selectedSkuId,
   onSelectProduct,
   onAddToCart,
   onAddAllBundle,
   voiceSummary,
+  viewportMode = "3d",
 }: BottomSKUCarouselProps) {
   const [addedSku, setAddedSku] = useState<string | null>(null);
   const [isCollapsed, setIsCollapsed] = useState(true);
   const [showVoiceCard, setShowVoiceCard] = useState(true);
+  const [activeCategory, setActiveCategory] = useState<string>("all");
 
-  const selectedProduct = products.find((p) => p.sku_id === selectedSkuId) || products[0];
+  useEffect(() => {
+    if (viewportMode === "placement" || viewportMode === "staging") {
+      setIsCollapsed(true);
+    }
+  }, [viewportMode]);
+
+  useEffect(() => {
+    if (recommendedProducts && recommendedProducts.length > 0) {
+      setActiveCategory("ai_match");
+      if (viewportMode === "3d") {
+        setIsCollapsed(false);
+      } else {
+        setIsCollapsed(true);
+      }
+    }
+  }, [recommendedProducts, viewportMode]);
+
+  const selectedProduct =
+    recommendedProducts.find((p) => p.sku_id === selectedSkuId) ||
+    products.find((p) => p.sku_id === selectedSkuId) ||
+    products[0];
+
+  const filteredProducts =
+    activeCategory === "ai_match" && recommendedProducts.length > 0
+      ? recommendedProducts
+      : activeCategory === "all"
+      ? products
+      : products.filter(
+          (p) => p.room_type === activeCategory || p.category === activeCategory
+        );
 
   const handleAddToCartClick = (e: React.MouseEvent, product: SuggestedProduct) => {
     e.stopPropagation();
@@ -128,10 +162,50 @@ export default function BottomSKUCarousel({
             </div>
           )}
 
+          {/* Category Filter Pills (When browsing full 100-SKU catalog or AI Match) */}
+          <div className="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none px-1 text-[11px] font-mono">
+            {recommendedProducts && recommendedProducts.length > 0 && (
+              <button
+                onClick={() => setActiveCategory("ai_match")}
+                className={`px-3 py-1 rounded-full whitespace-nowrap transition-all flex items-center gap-1 cursor-pointer ${
+                  activeCategory === "ai_match"
+                    ? "bg-gradient-to-r from-cyan-400 to-teal-400 text-slate-950 font-bold shadow-[0_0_12px_rgba(6,182,212,0.5)]"
+                    : "bg-cyan-950/70 text-cyan-300 border border-cyan-500/40 hover:bg-cyan-900/70"
+                }`}
+              >
+                <Sparkles className="w-3 h-3 text-current animate-pulse" />
+                <span>✨ AI Match ({recommendedProducts.length})</span>
+              </button>
+            )}
+
+            {[
+              { id: "all", label: `All (${products.length})` },
+              { id: "living_room", label: "Living Room" },
+              { id: "bedroom", label: "Bedroom" },
+              { id: "dining", label: "Dining" },
+              { id: "office", label: "Office" },
+              { id: "storage", label: "Storage" },
+              { id: "lighting", label: "Lighting" },
+              { id: "decor", label: "Decor" },
+            ].map((tab) => (
+              <button
+                key={tab.id}
+                onClick={() => setActiveCategory(tab.id)}
+                className={`px-2.5 py-1 rounded-full whitespace-nowrap transition-all cursor-pointer ${
+                  activeCategory === tab.id
+                    ? "bg-cyan-500 text-slate-950 font-bold shadow-[0_0_10px_rgba(6,182,212,0.4)]"
+                    : "bg-slate-900/80 text-slate-400 hover:text-white border border-slate-800"
+                }`}
+              >
+                {tab.label}
+              </button>
+            ))}
+          </div>
+
           {/* SKU Carousel Row */}
           <div className="relative">
             <div className="flex items-stretch gap-2.5 sm:gap-3 overflow-x-auto pb-1 scrollbar-none snap-x snap-mandatory">
-              {products.map((product) => {
+              {filteredProducts.map((product) => {
                 const isSelected = product.sku_id === selectedSkuId;
                 const savings = Math.max(
                   0,
@@ -181,7 +255,7 @@ export default function BottomSKUCarousel({
                       <h4 className="text-xs sm:text-sm font-bold text-white tracking-tight line-clamp-1 mb-0.5">
                         {product.item_name}
                       </h4>
-                      <div className="flex items-center gap-1.5 text-[10px] text-slate-400 font-mono mb-1.5">
+                      <div className="flex items-center gap-1.5 text-[10px] text-slate-400 font-mono mb-1">
                         <Maximize className="w-2.5 h-2.5 text-slate-500" />
                         <span>
                           {product.dimensions_meters.width}m ×{" "}
@@ -189,6 +263,23 @@ export default function BottomSKUCarousel({
                           {product.dimensions_meters.height}m
                         </span>
                       </div>
+
+                      {/* Available finishes swatch dots */}
+                      {product.available_finishes && product.available_finishes.length > 0 && (
+                        <div className="flex items-center gap-1.5 mb-1.5">
+                          <span className="text-[9px] text-slate-500 font-mono">Finishes:</span>
+                          <div className="flex items-center gap-1">
+                            {product.available_finishes.slice(0, 4).map((f) => (
+                              <span
+                                key={f.name}
+                                title={f.name}
+                                className="w-2.5 h-2.5 rounded-full border border-slate-600/80 shrink-0"
+                                style={{ backgroundColor: f.hex }}
+                              />
+                            ))}
+                          </div>
+                        </div>
+                      )}
 
                       {/* AI Match snippet */}
                       <p className="text-[10px] sm:text-[11px] text-slate-400 line-clamp-1 leading-snug mb-2">

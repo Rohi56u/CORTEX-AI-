@@ -1,99 +1,10 @@
 import { GoogleGenerativeAI, SchemaType } from "@google/generative-ai";
 import { NeuroCommerceAIResponse, SuggestedProduct } from "../types/neurocommerce";
 
-// Catalog of available 3D furniture models
-export const CATALOG_PRODUCTS: SuggestedProduct[] = [
-  {
-    sku_id: "SKU-SOFA-MOD-01",
-    item_name: "Aura Minimalist Velvet Sofa",
-    category: "seating",
-    price_original: 1299,
-    price_bundle: 999,
-    dimensions_meters: {
-      width: 2.1,
-      depth: 0.9,
-      height: 0.85,
-    },
-    bounding_box_2d: {
-      ymin: 450,
-      xmin: 220,
-      ymax: 850,
-      xmax: 780,
-    },
-    model_glb_path: "/models/sofa_modern.glb",
-    model_usdz_path: "/models/sofa_modern.usdz",
-    reasoning:
-      "Calculated 2.1m clearance against the primary focal wall. Fabric texture complements neutral wall tones and balances natural illumination.",
-    in_stock: true,
-    rating: 4.9,
-    reviews_count: 148,
-    available_finishes: [
-      { name: "Ocean Teal Velvet", hex: "#3b8296" },
-      { name: "Saddle Bouclé", hex: "#c2b29f" },
-      { name: "Charcoal Chenille", hex: "#374151" },
-    ],
-  },
-  {
-    sku_id: "SKU-TABLE-COF-02",
-    item_name: "Nordic Walnut Oval Coffee Table",
-    category: "tables",
-    price_original: 450,
-    price_bundle: 360,
-    dimensions_meters: {
-      width: 1.2,
-      depth: 0.6,
-      height: 0.42,
-    },
-    bounding_box_2d: {
-      ymin: 600,
-      xmin: 320,
-      ymax: 900,
-      xmax: 680,
-    },
-    model_glb_path: "/models/table_coffee.glb",
-    model_usdz_path: "/models/table_coffee.usdz",
-    reasoning:
-      "Low center of gravity with rounded edges to optimize traffic flow in medium-to-large open living spaces.",
-    in_stock: true,
-    rating: 4.8,
-    reviews_count: 94,
-    available_finishes: [
-      { name: "Solid American Walnut", hex: "#5c3a21" },
-      { name: "Natural Blonde Ash", hex: "#d4b38b" },
-      { name: "Midnight Black Oak", hex: "#1f2937" },
-    ],
-  },
-  {
-    sku_id: "SKU-CHAIR-ACC-03",
-    item_name: "Zenith Sculptural Accent Chair",
-    category: "seating",
-    price_original: 580,
-    price_bundle: 460,
-    dimensions_meters: {
-      width: 0.82,
-      depth: 0.85,
-      height: 0.78,
-    },
-    bounding_box_2d: {
-      ymin: 520,
-      xmin: 650,
-      ymax: 880,
-      xmax: 920,
-    },
-    model_glb_path: "/models/chair_nordic.glb",
-    model_usdz_path: "/models/chair_nordic.usdz",
-    reasoning:
-      "Ergonomic angled silhouette ideal for corner reading nooks and complementary seating pairings.",
-    in_stock: true,
-    rating: 4.9,
-    reviews_count: 76,
-    available_finishes: [
-      { name: "Warm Wheat Bouclé", hex: "#d8cbb8" },
-      { name: "Terracotta Linen", hex: "#b45309" },
-      { name: "Forest Moss Velvet", hex: "#15803d" },
-    ],
-  },
-];
+import { CATALOG_PRODUCTS_100 } from "@/data/catalog";
+
+// Complete 100-SKU Spatial Commerce 3D Catalog
+export const CATALOG_PRODUCTS: SuggestedProduct[] = CATALOG_PRODUCTS_100;
 
 const neuroCommerceResponseSchema = {
   type: SchemaType.OBJECT,
@@ -131,8 +42,6 @@ const neuroCommerceResponseSchema = {
         item_name: { type: SchemaType.STRING },
         category: {
           type: SchemaType.STRING,
-          format: "enum",
-          enum: ["seating", "tables", "lighting", "decor"],
         },
         price_original: { type: SchemaType.NUMBER },
         price_bundle: { type: SchemaType.NUMBER },
@@ -237,7 +146,7 @@ export async function processRoomKeyframes(
   }
 
   const genAI = new GoogleGenerativeAI(apiKey);
-  const modelName = process.env.GEMINI_MODEL || "gemini-1.5-pro";
+  const modelName = process.env.GEMINI_MODEL || "gemini-2.5-flash";
   const model = genAI.getGenerativeModel({
     model: modelName,
     generationConfig: {
@@ -254,26 +163,52 @@ export async function processRoomKeyframes(
     };
   });
 
+  const catalogSummary = CATALOG_PRODUCTS.map(
+    (p) => `- ${p.sku_id}: ${p.item_name} [${p.category}, room: ${p.room_type || "any"}] ($${p.price_original}/bundle $${p.price_bundle}, dims: ${p.dimensions_meters.width}x${p.dimensions_meters.depth}x${p.dimensions_meters.height}m, glb: ${p.model_glb_path}, usdz: ${p.model_usdz_path})`
+  ).join("\n");
+
   const prompt = `You are NeuroCommerce AI, an intelligent spatial commerce engine.
 Analyze these room scan keyframes and the user's intent: "${userPrompt || "Find furniture that matches my room style and fits the space."}".
 
-Available 3D Catalog:
-1. SKU-SOFA-MOD-01: Aura Minimalist Velvet Sofa (Category: seating, $1299 / bundle $999, dims: 2.1 x 0.9 x 0.85m, models: /models/sofa_modern.glb, /models/sofa_modern.usdz)
-2. SKU-TABLE-COF-02: Nordic Walnut Oval Coffee Table (Category: tables, $450 / bundle $360, dims: 1.2 x 0.6 x 0.42m, models: /models/table_coffee.glb, /models/table_coffee.usdz)
-3. SKU-CHAIR-ACC-03: Zenith Sculptural Accent Chair (Category: seating, $580 / bundle $460, dims: 0.82 x 0.85 x 0.78m, models: /models/chair_nordic.glb, /models/chair_nordic.usdz)
+Available 100-SKU Spatial 3D Catalog:
+${catalogSummary}
 
 Instructions:
-1. Estimate room type, dominant wall color hex or descriptive tone, and ambient lighting condition.
-2. Choose the best matching primary SKU and 2 alternative SKUs from the catalog that match the room aesthetics and user request.
-3. Determine normalized bounding box coordinates [0, 1000] for optimal placement reticle in the room viewport.
-4. Compose a concise, natural, professional agent voice summary explaining why this piece fits the space.
+1. Estimate room type (living_room, bedroom, office, dining), dominant wall color hex or descriptive tone, and ambient lighting condition.
+2. Select the single best matching primary SKU (recommended_primary_sku) that fits the clearance dimensions and color temperature.
+3. Select 5 to 7 complementary alternative SKUs (alternative_carousel_skus) from the catalog to form a coordinated interior room suite.
+4. Determine normalized bounding box coordinates [0, 1000] for optimal placement in the room viewport.
+5. Compose a concise, natural, professional agent voice summary explaining why this piece fits the space.
 
 Return ONLY the structured JSON adhering to the specified schema.`;
 
   try {
     const result = await model.generateContent([prompt, ...imageParts]);
+    const usage = result.response.usageMetadata;
+    console.log(
+      `📊 [Gemini Token Monitor] Model: ${modelName} | Input: ${usage?.promptTokenCount || 0} tokens | Output: ${usage?.candidatesTokenCount || 0} tokens | Total: ${usage?.totalTokenCount || 0} tokens`
+    );
     const text = result.response.text();
-    return JSON.parse(text) as NeuroCommerceAIResponse;
+    const parsed = JSON.parse(text) as NeuroCommerceAIResponse;
+
+    // Enrich with exact verified catalog paths and finish data
+    const enrichProduct = (prod: SuggestedProduct): SuggestedProduct => {
+      const found = CATALOG_PRODUCTS.find((p) => p.sku_id === prod.sku_id);
+      if (found) {
+        return {
+          ...found,
+          reasoning: prod.reasoning || found.reasoning,
+          bounding_box_2d: prod.bounding_box_2d || found.bounding_box_2d,
+        };
+      }
+      return prod;
+    };
+
+    return {
+      ...parsed,
+      recommended_primary_sku: enrichProduct(parsed.recommended_primary_sku),
+      alternative_carousel_skus: (parsed.alternative_carousel_skus || []).map(enrichProduct),
+    };
   } catch (error) {
     console.error("Gemini API call failed, using fallback:", error);
     return generateFallbackResponse(userPrompt, true);
@@ -288,49 +223,76 @@ export function generateFallbackResponse(
   wasError: boolean = false
 ): NeuroCommerceAIResponse {
   fallbackCounter++;
-  const isTableIntent = /table|coffee|desk/i.test(userPrompt);
-  const isChairIntent = /chair|accent|armchair|seat/i.test(userPrompt);
+  const lower = userPrompt.toLowerCase();
 
-  let primary = CATALOG_PRODUCTS[fallbackCounter % CATALOG_PRODUCTS.length];
-  let alternatives = CATALOG_PRODUCTS.filter((p) => p.sku_id !== primary.sku_id);
+  const isBedroom = /bed|bedroom|sleep|nightstand/i.test(lower);
+  const isOffice = /office|desk|work|executive|study/i.test(lower);
+  const isDining = /dining|dinner|table|eat|kitchen/i.test(lower);
+  const isLighting = /light|lamp|chandelier|sconce/i.test(lower);
+  const isStorage = /shelf|book|storage|credenza|dresser/i.test(lower);
 
-  if (isTableIntent) {
-    primary = CATALOG_PRODUCTS[1];
-    alternatives = [CATALOG_PRODUCTS[0], CATALOG_PRODUCTS[2]];
-  } else if (isChairIntent) {
-    primary = CATALOG_PRODUCTS[2];
-    alternatives = [CATALOG_PRODUCTS[0], CATALOG_PRODUCTS[1]];
+  let targetRoomType: "living_room" | "bedroom" | "office" | "dining" = "living_room";
+
+  if (isBedroom) targetRoomType = "bedroom";
+  else if (isOffice) targetRoomType = "office";
+  else if (isDining) targetRoomType = "dining";
+  else {
+    const cycleRooms: Array<"living_room" | "bedroom" | "office" | "dining"> = [
+      "living_room",
+      "office",
+      "dining",
+      "bedroom",
+    ];
+    targetRoomType = cycleRooms[fallbackCounter % cycleRooms.length];
   }
 
-  const roomTypes: Array<"living_room" | "bedroom" | "office" | "dining"> = [
-    "living_room",
-    "office",
-    "living_room",
-  ];
-  const wallColors = ["#E5E1D8 Warm Sand", "#D3D7CF Nordic Clay", "#EFECE6 Pearl White"];
+  // Filter 100-SKU catalog by room type or category
+  const roomProducts = CATALOG_PRODUCTS.filter((p) => p.room_type === targetRoomType);
+  const candidateList = roomProducts.length > 0 ? roomProducts : CATALOG_PRODUCTS;
+
+  let primary = candidateList[fallbackCounter % candidateList.length];
+  let alternatives = candidateList
+    .filter((p) => p.sku_id !== primary.sku_id)
+    .slice(0, 7);
+
+  // If specific category requested, prioritize
+  if (isLighting) {
+    const lights = CATALOG_PRODUCTS.filter((p) => p.category === "lighting");
+    if (lights.length > 0) {
+      primary = lights[fallbackCounter % lights.length];
+      alternatives = lights.filter((p) => p.sku_id !== primary.sku_id).slice(0, 6);
+    }
+  } else if (isStorage) {
+    const storage = CATALOG_PRODUCTS.filter((p) => p.category === "storage");
+    if (storage.length > 0) {
+      primary = storage[fallbackCounter % storage.length];
+      alternatives = storage.filter((p) => p.sku_id !== primary.sku_id).slice(0, 6);
+    }
+  }
+
+  const wallColors = ["#E5E1D8 Warm Sand", "#D3D7CF Nordic Clay", "#EFECE6 Pearl White", "#C8BFA7 Coastal Linen"];
   const lightings: Array<"bright_daylight" | "warm_indoor" | "dim_ambient"> = [
     "bright_daylight",
     "warm_indoor",
     "dim_ambient",
   ];
 
-  const roomType = roomTypes[fallbackCounter % roomTypes.length];
   const wallColor = wallColors[fallbackCounter % wallColors.length];
   const lighting = lightings[fallbackCounter % lightings.length];
 
   const note = wasError
     ? "(Notice: Gemini API returned an error, high-fidelity spatial simulator used)"
-    : "(Notice: Demo simulation active. Add your GEMINI_API_KEY in .env.local to activate live multimodal vision)";
+    : "(Notice: Demo simulation active across 100 spatial SKUs. Add your GEMINI_API_KEY to activate live multimodal vision)";
 
   return {
     status: "success",
     spatial_analysis: {
-      estimated_room_type: roomType,
+      estimated_room_type: targetRoomType,
       detected_wall_color: wallColor,
       lighting_condition: lighting,
     },
     recommended_primary_sku: primary,
     alternative_carousel_skus: alternatives,
-    agent_voice_summary: `Analyzed room layout: Identified a ${roomType.replace("_", " ")} space with ${wallColor} palette. Recommended the ${primary.item_name} for ideal scale and flow. ${note}`,
+    agent_voice_summary: `Analyzed space: Identified a ${targetRoomType.replace("_", " ")} setting with ${wallColor} palette. Selected the ${primary.item_name} for ideal scale clearance (${primary.dimensions_meters.width}m W x ${primary.dimensions_meters.depth}m D) and room harmony. ${note}`,
   };
 }

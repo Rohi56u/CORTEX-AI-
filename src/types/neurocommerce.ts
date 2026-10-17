@@ -14,7 +14,8 @@ export interface BoundingBox2D {
 export interface SuggestedProduct {
   sku_id: string;
   item_name: string;
-  category: "seating" | "tables" | "lighting" | "decor";
+  category: "seating" | "tables" | "lighting" | "decor" | "storage" | "bed";
+  room_type?: "living_room" | "bedroom" | "office" | "dining";
   price_original: number;
   price_bundle: number;
   dimensions_meters: {
@@ -44,4 +45,19 @@ export interface NeuroCommerceAIResponse {
   recommended_primary_sku: SuggestedProduct;
   alternative_carousel_skus: SuggestedProduct[];
   agent_voice_summary: string;
+  captured_room_image?: string;
 }
+
+export interface SavedRoomDesign {
+  id: string;
+  timestamp: string;
+  roomType: string;
+  themeTitle: string;
+  wallColor: string;
+  lightingCondition: string;
+  primaryProduct: SuggestedProduct;
+  alternativeProducts: SuggestedProduct[];
+  voiceSummary: string;
+  roomImage: string | null;
+}
+
