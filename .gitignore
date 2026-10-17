@@ -31,3 +31,6 @@ certificates/
 .idea/
 .vscode/
 *.swp
+
+# Video Production Temporary Assets
+video_production/
