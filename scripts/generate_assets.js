@@ -263,63 +263,125 @@ const hdriDir = path.join(__dirname, "../public/hdri");
 fs.mkdirSync(modelsDir, { recursive: true });
 fs.mkdirSync(hdriDir, { recursive: true });
 
-// 1. Sofa Modern GLB
-const sofaBoxes = [
-  // Base seat cushion
-  { min: [-0.9, 0.15, -0.4], max: [0.9, 0.45, 0.4], color: [0.24, 0.48, 0.58] },
-  // Backrest
-  { min: [-0.9, 0.45, -0.4], max: [0.9, 0.85, -0.2], color: [0.2, 0.42, 0.52] },
+// 4. Modern Bookshelf GLB
+const bookshelfBoxes = [
+  // Left vertical side
+  { min: [-0.45, 0, -0.15], max: [-0.4, 1.4, 0.15], color: [0.25, 0.18, 0.12] },
+  // Right vertical side
+  { min: [0.4, 0, -0.15], max: [0.45, 1.4, 0.15], color: [0.25, 0.18, 0.12] },
+  // Bottom base
+  { min: [-0.45, 0.05, -0.15], max: [0.45, 0.09, 0.15], color: [0.25, 0.18, 0.12] },
+  // Shelf 1
+  { min: [-0.4, 0.4, -0.14], max: [0.4, 0.43, 0.14], color: [0.35, 0.25, 0.18] },
+  // Shelf 2
+  { min: [-0.4, 0.75, -0.14], max: [0.4, 0.78, 0.14], color: [0.35, 0.25, 0.18] },
+  // Shelf 3
+  { min: [-0.4, 1.1, -0.14], max: [0.4, 1.13, 0.14], color: [0.35, 0.25, 0.18] },
+  // Top cover
+  { min: [-0.45, 1.37, -0.15], max: [0.45, 1.4, 0.15], color: [0.25, 0.18, 0.12] },
+  // Books cluster 1
+  { min: [-0.35, 0.43, -0.1], max: [-0.2, 0.7, 0.1], color: [0.75, 0.25, 0.2] },
+  { min: [-0.2, 0.43, -0.1], max: [-0.08, 0.65, 0.1], color: [0.2, 0.45, 0.7] },
+  // Books cluster 2
+  { min: [0.1, 0.78, -0.1], max: [0.25, 1.05, 0.1], color: [0.85, 0.7, 0.2] },
+];
+fs.writeFileSync(path.join(modelsDir, "bookshelf_modern.glb"), createGLB(bookshelfBoxes));
+
+// 5. Executive Leather Lounge Chair GLB
+const execChairBoxes = [
+  // 5-star swivel base feet
+  { min: [-0.35, 0.03, -0.04], max: [0.35, 0.07, 0.04], color: [0.85, 0.85, 0.88] },
+  { min: [-0.04, 0.03, -0.35], max: [0.04, 0.07, 0.35], color: [0.85, 0.85, 0.88] },
+  // Central pneumatic stem
+  { min: [-0.04, 0.07, -0.04], max: [0.04, 0.38, 0.04], color: [0.85, 0.85, 0.88] },
+  // Ergonomic seat cushion
+  { min: [-0.35, 0.38, -0.32], max: [0.35, 0.48, 0.32], color: [0.28, 0.18, 0.12] },
+  // High backrest
+  { min: [-0.32, 0.48, -0.32], max: [0.32, 1.05, -0.2], color: [0.28, 0.18, 0.12] },
   // Left armrest
-  { min: [-1.05, 0.15, -0.4], max: [-0.9, 0.65, 0.4], color: [0.18, 0.38, 0.48] },
+  { min: [-0.38, 0.48, -0.2], max: [-0.32, 0.68, 0.22], color: [0.2, 0.12, 0.08] },
   // Right armrest
-  { min: [0.9, 0.15, -0.4], max: [1.05, 0.65, 0.4], color: [0.18, 0.38, 0.48] },
-  // 4 Legs (metallic gold/black)
-  { min: [-0.95, 0, 0.25], max: [-0.85, 0.15, 0.35], color: [0.8, 0.7, 0.3] },
-  { min: [0.85, 0, 0.25], max: [0.95, 0.15, 0.35], color: [0.8, 0.7, 0.3] },
-  { min: [-0.95, 0, -0.35], max: [-0.85, 0.15, -0.25], color: [0.8, 0.7, 0.3] },
-  { min: [0.85, 0, -0.35], max: [0.95, 0.15, -0.25], color: [0.8, 0.7, 0.3] },
+  { min: [0.32, 0.48, -0.2], max: [0.38, 0.68, 0.22], color: [0.2, 0.12, 0.08] },
 ];
-fs.writeFileSync(path.join(modelsDir, "sofa_modern.glb"), createGLB(sofaBoxes));
+fs.writeFileSync(path.join(modelsDir, "chair_executive.glb"), createGLB(execChairBoxes));
 
-// 2. Coffee Table GLB
-const tableBoxes = [
-  // Table top
-  { min: [-0.6, 0.38, -0.3], max: [0.6, 0.42, 0.3], color: [0.45, 0.28, 0.18] },
-  // Lower shelf
-  { min: [-0.5, 0.15, -0.25], max: [0.5, 0.17, 0.25], color: [0.38, 0.22, 0.14] },
-  // 4 Legs
-  { min: [-0.55, 0, 0.2], max: [-0.5, 0.38, 0.25], color: [0.15, 0.15, 0.15] },
-  { min: [0.5, 0, 0.2], max: [0.55, 0.38, 0.25], color: [0.15, 0.15, 0.15] },
-  { min: [-0.55, 0, -0.25], max: [-0.5, 0.38, -0.2], color: [0.15, 0.15, 0.15] },
-  { min: [0.5, 0, -0.25], max: [0.55, 0.38, -0.2], color: [0.15, 0.15, 0.15] },
+// 6. Barn Floor Lamp GLB
+const lampBarnBoxes = [
+  // Heavy circular base
+  { min: [-0.22, 0, -0.22], max: [0.22, 0.04, 0.22], color: [0.12, 0.12, 0.14] },
+  // Tall vertical mast
+  { min: [-0.02, 0.04, -0.02], max: [0.02, 1.5, 0.02], color: [0.78, 0.65, 0.3] },
+  // Angled arm top
+  { min: [-0.02, 1.48, -0.02], max: [0.28, 1.52, 0.02], color: [0.78, 0.65, 0.3] },
+  // Cone shade
+  { min: [0.18, 1.35, -0.12], max: [0.38, 1.48, 0.12], color: [0.15, 0.15, 0.18] },
+  // Warm glowing filament/bulb
+  { min: [0.25, 1.3, -0.04], max: [0.31, 1.36, 0.04], color: [1.0, 0.9, 0.5] },
 ];
-fs.writeFileSync(path.join(modelsDir, "table_coffee.glb"), createGLB(tableBoxes));
+fs.writeFileSync(path.join(modelsDir, "lamp_barn.glb"), createGLB(lampBarnBoxes));
 
-// 3. Nordic Chair GLB
-const chairBoxes = [
-  // Seat cushion
-  { min: [-0.35, 0.38, -0.35], max: [0.35, 0.46, 0.35], color: [0.85, 0.75, 0.6] },
-  // Curved backrest
-  { min: [-0.35, 0.46, -0.35], max: [0.35, 0.78, -0.25], color: [0.8, 0.7, 0.55] },
-  // 4 Legs
-  { min: [-0.3, 0, 0.25], max: [-0.25, 0.38, 0.3], color: [0.3, 0.2, 0.1] },
-  { min: [0.25, 0, 0.25], max: [0.3, 0.38, 0.3], color: [0.3, 0.2, 0.1] },
-  { min: [-0.3, 0, -0.3], max: [-0.25, 0.38, -0.25], color: [0.3, 0.2, 0.1] },
-  { min: [0.25, 0, -0.3], max: [0.3, 0.38, -0.25], color: [0.3, 0.2, 0.1] },
+// 7. Iridescent Pendant / Accent Lamp GLB
+const lampIridescenceBoxes = [
+  // Base pedestal
+  { min: [-0.15, 0, -0.15], max: [0.15, 0.05, 0.15], color: [0.85, 0.8, 0.75] },
+  // Central column
+  { min: [-0.02, 0.05, -0.02], max: [0.02, 0.35, 0.02], color: [0.85, 0.8, 0.75] },
+  // Cylindrical diffuser
+  { min: [-0.18, 0.35, -0.18], max: [0.18, 0.75, 0.18], color: [0.4, 0.85, 0.95] },
+  // Top brass cap
+  { min: [-0.12, 0.75, -0.12], max: [0.12, 0.78, 0.12], color: [0.9, 0.75, 0.3] },
 ];
-fs.writeFileSync(path.join(modelsDir, "chair_nordic.glb"), createGLB(chairBoxes));
+fs.writeFileSync(path.join(modelsDir, "lamp_iridescence.glb"), createGLB(lampIridescenceBoxes));
+
+// 8. Potted Monstera / Botanical Planter GLB
+const plantPottedBoxes = [
+  // Ceramic planter pot
+  { min: [-0.2, 0, -0.2], max: [0.2, 0.38, 0.2], color: [0.9, 0.88, 0.84] },
+  // Dark potting soil
+  { min: [-0.18, 0.36, -0.18], max: [0.18, 0.39, 0.18], color: [0.15, 0.1, 0.05] },
+  // Main stem
+  { min: [-0.02, 0.38, -0.02], max: [0.02, 0.8, 0.02], color: [0.2, 0.5, 0.2] },
+  // Leaf canopy (clustered lush green facets)
+  { min: [-0.35, 0.65, -0.3], max: [0.05, 0.85, 0.1], color: [0.15, 0.65, 0.25] },
+  { min: [-0.05, 0.7, 0.05], max: [0.35, 0.9, 0.35], color: [0.2, 0.7, 0.3] },
+  { min: [-0.2, 0.78, 0.1], max: [0.2, 0.98, 0.3], color: [0.18, 0.6, 0.22] },
+];
+fs.writeFileSync(path.join(modelsDir, "plant_potted.glb"), createGLB(plantPottedBoxes));
+
+// 9. Velvet Ottoman / Pouf GLB
+const poufSilkBoxes = [
+  // Plinth base
+  { min: [-0.32, 0, -0.32], max: [0.32, 0.06, 0.32], color: [0.75, 0.65, 0.3] },
+  // Round plush body
+  { min: [-0.35, 0.06, -0.35], max: [0.35, 0.42, 0.35], color: [0.72, 0.35, 0.45] },
+  // Tufted top dome
+  { min: [-0.3, 0.42, -0.3], max: [0.3, 0.48, 0.3], color: [0.65, 0.3, 0.4] },
+];
+fs.writeFileSync(path.join(modelsDir, "pouf_silk.glb"), createGLB(poufSilkBoxes));
 
 // Create placeholder USDZ files (zip archives with usdc format metadata)
 const emptyZip = Buffer.from([
   0x50, 0x4b, 0x05, 0x06, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
   0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 ]);
-fs.writeFileSync(path.join(modelsDir, "sofa_modern.usdz"), emptyZip);
-fs.writeFileSync(path.join(modelsDir, "table_coffee.usdz"), emptyZip);
-fs.writeFileSync(path.join(modelsDir, "chair_nordic.usdz"), emptyZip);
+const usdzFiles = [
+  "sofa_modern.usdz",
+  "table_coffee.usdz",
+  "chair_nordic.usdz",
+  "bookshelf_modern.usdz",
+  "chair_executive.usdz",
+  "lamp_barn.usdz",
+  "lamp_iridescence.usdz",
+  "plant_potted.usdz",
+  "pouf_silk.usdz",
+];
+for (const file of usdzFiles) {
+  fs.writeFileSync(path.join(modelsDir, file), emptyZip);
+}
 
 // HDR Environment maps (64x32 for high performance loading)
 fs.writeFileSync(path.join(hdriDir, "daylight_studio.hdr"), createHDR(64, 32, false));
 fs.writeFileSync(path.join(hdriDir, "warm_evening.hdr"), createHDR(64, 32, true));
 
-console.log("All seed 3D models and HDR environment maps created successfully!");
+console.log("All 9 seed 3D models and HDR environment maps created successfully!");
+
