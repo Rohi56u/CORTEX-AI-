@@ -142,7 +142,7 @@ async function runFastDemoPipeline() {
           <span style="width: 12px; height: 12px; border-radius: 50%; background: #22d3ee; box-shadow: 0 0 15px #22d3ee; display: inline-block;"></span>
           SPATIAL NEUROCOMMERCE ENGINE
         </div>
-        <div class="mono" style="color: #22d3ee; font-size: 15px; font-weight: 700;">NEXT.JS 14 • GOOGLE GEMINI 2.5 • WEBXR</div>
+        <div class="mono" style="color: #22d3ee; font-size: 15px; font-weight: 700;">NEXT.JS 14 • MULTIMODAL SPATIAL AI • WEBXR</div>
       </div>
 
       <div style="max-width: 1100px; margin: auto 0;">
@@ -432,7 +432,7 @@ async function runFastDemoPipeline() {
         Experience <span class="glow-cyan" style="background: linear-gradient(90deg, #22d3ee, #2dd4bf, #818cf8); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">CORTEX AI</span>
       </h1>
       <p style="color: #cbd5e1; font-size: 24px; font-weight: 500; line-height: 1.6; max-width: 880px; margin: 0 auto 28px;">
-        Transforming online furniture retail from guesswork into an exact spatial science with Google Gemini and WebXR.
+        Transforming online furniture retail from guesswork into an exact spatial science with Multimodal AI and WebXR.
       </p>
 
       <div class="card-box mono" style="display: inline-flex;">
@@ -454,7 +454,7 @@ async function runFastDemoPipeline() {
     </div>
 
     <div style="display: flex; justify-content: space-between; align-items: center; border-top: 1px solid rgba(51, 65, 85, 0.8); padding-top: 24px;">
-      <div class="mono" style="color: #64748b; font-size: 14px;">POWERED BY NEXT.JS 14 • MODEL-VIEWER • GOOGLE GEMINI 2.5</div>
+      <div class="mono" style="color: #64748b; font-size: 14px;">POWERED BY NEXT.JS 14 • MODEL-VIEWER • MULTIMODAL SPATIAL AI</div>
       <div class="mono" style="color: #22d3ee; font-weight: 700; font-size: 15px;">THANK YOU FOR WATCHING • 2026</div>
     </div>
   </body>

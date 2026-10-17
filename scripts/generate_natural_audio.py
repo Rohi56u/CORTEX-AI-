@@ -25,7 +25,7 @@ SCRIPTS = [
         "text": (
             "Online furniture shopping has a fifty-billion-dollar problem: thirty-eight percent of orders get returned. "
             "Flat two-D photos fail to show true scale, and studio lighting never matches home lighting. "
-            "Meet CORTEX AI. Powered by Google Gemini and WebXR, it analyzes your space in fifteen seconds and places one-to-one scale digital twins directly in your room."
+            "Meet CORTEX AI. Powered by advanced spatial AI and WebXR, it analyzes your space in fifteen seconds and places one-to-one scale digital twins directly in your room."
         )
     },
     {
@@ -40,7 +40,7 @@ SCRIPTS = [
         "id": "part3_scanner",
         "text": (
             "With our fifteen-second room scanner, spatial intelligence takes over. "
-            "Using live camera passthrough or a video pan, Google Gemini instantly extracts room dimensions, wall palettes, and lighting conditions, "
+            "Using live camera passthrough or a video pan, our AI vision engine instantly extracts room dimensions, wall palettes, and lighting conditions, "
             "matching the ideal furniture footprint for your space."
         )
     },
@@ -56,7 +56,7 @@ SCRIPTS = [
         "id": "part5_placement_staging",
         "text": (
             "The Placement Blueprint mode projects a holographic CAD clearance grid, guaranteeing walking perimeters remain clear. "
-            "In AI Virtual Staging mode, Gemini renders a photorealistic preview with calibrated perspective shadows, "
+            "In AI Virtual Staging mode, our AI renders a photorealistic preview with calibrated perspective shadows, "
             "letting you see the finished room before buying."
         )
     },
