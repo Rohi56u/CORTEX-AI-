@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import ARViewport from "@/components/ARViewport";
 import LightingToggle from "@/components/LightingToggle";
 import BottomSKUCarousel from "@/components/BottomSKUCarousel";
@@ -9,7 +9,9 @@ import CartDrawer from "@/components/CartDrawer";
 import SpatialPlacementHUD from "@/components/SpatialPlacementHUD";
 import AIStagingPreview from "@/components/AIStagingPreview";
 import DesignThemePanel from "@/components/DesignThemePanel";
+import AIQuickQueryBar from "@/components/AIQuickQueryBar";
 import { CATALOG_PRODUCTS } from "@/lib/gemini";
+import { speechEngine } from "@/lib/speechSynthesis";
 import {
   SuggestedProduct,
   NeuroCommerceAIResponse,
@@ -43,12 +45,18 @@ export default function NeuroCommercePage() {
   const [viewportMode, setViewportMode] = useState<"3d" | "placement" | "staging">("3d");
   const [capturedRoomImage, setCapturedRoomImage] = useState<string | null>(null);
 
+  // Material Finish Customization
+  const [activeFinishHex, setActiveFinishHex] = useState<string | undefined>(
+    CATALOG_PRODUCTS[0]?.available_finishes?.[0]?.hex
+  );
+
   // Design Theme Panel State
   const [isThemePanelOpen, setIsThemePanelOpen] = useState(false);
 
-  // E-Commerce Cart State
+  // E-Commerce Cart State with LocalStorage Persistence
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
   const [isCartOpen, setIsCartOpen] = useState(false);
+  const [isQueryProcessing, setIsQueryProcessing] = useState(false);
 
   // Products and Selection
   const [products, setProducts] = useState<SuggestedProduct[]>(CATALOG_PRODUCTS);
@@ -65,19 +73,34 @@ export default function NeuroCommercePage() {
   });
 
   const [voiceSummary, setVoiceSummary] = useState<string>(
-    "NeuroCommerce AI ready. Tap 'Scan Room' to analyze your space in 15 seconds with Gemini 1.5 Pro, or select furniture below."
+    "NeuroCommerce AI ready. Tap 'Scan Room' to analyze your space in 15 seconds with Gemini, or query furniture via voice below."
   );
 
-  // Load saved API key from localStorage
+  // Load saved API key & Cart from localStorage on mount
   useEffect(() => {
     if (typeof window !== "undefined") {
-      const saved = localStorage.getItem("GEMINI_API_KEY");
-      if (saved) {
-        setActiveApiKey(saved);
-        setApiKeyInput(saved);
+      const savedKey = localStorage.getItem("GEMINI_API_KEY");
+      if (savedKey) {
+        setActiveApiKey(savedKey);
+        setApiKeyInput(savedKey);
       }
+      try {
+        const savedCart = localStorage.getItem("NEUROCOMMERCE_CART");
+        if (savedCart) {
+          setCartItems(JSON.parse(savedCart));
+        }
+      } catch (e) {}
     }
   }, []);
+
+  // Sync Cart changes to localStorage
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      try {
+        localStorage.setItem("NEUROCOMMERCE_CART", JSON.stringify(cartItems));
+      } catch (e) {}
+    }
+  }, [cartItems]);
 
   const handleSaveApiKey = () => {
     if (typeof window !== "undefined") {
@@ -95,6 +118,15 @@ export default function NeuroCommercePage() {
     }, 4500);
   };
 
+  const handleSelectProduct = (product: SuggestedProduct) => {
+    setSelectedProduct(product);
+    if (product.available_finishes && product.available_finishes.length > 0) {
+      setActiveFinishHex(product.available_finishes[0].hex);
+    } else {
+      setActiveFinishHex(undefined);
+    }
+  };
+
   const handleAddToCart = (product: SuggestedProduct) => {
     setCartItems((prev) => {
       const existing = prev.find((i) => i.product.sku_id === product.sku_id);
@@ -105,7 +137,7 @@ export default function NeuroCommercePage() {
             : i
         );
       }
-      return [...prev, { product, quantity: 1 }];
+      return [...prev, { product, quantity: 1, selectedFinish: activeFinishHex }];
     });
     showToast(`Added ${product.item_name} to cart`);
   };
@@ -159,7 +191,7 @@ export default function NeuroCommercePage() {
         ...(result.alternative_carousel_skus || []),
       ];
       setRecommendedProducts(allList);
-      setSelectedProduct(result.recommended_primary_sku);
+      handleSelectProduct(result.recommended_primary_sku);
     }
 
     if (result.captured_room_image) {
@@ -169,6 +201,7 @@ export default function NeuroCommercePage() {
 
     if (result.agent_voice_summary) {
       setVoiceSummary(result.agent_voice_summary);
+      speechEngine.speak(result.agent_voice_summary);
     }
 
     setHasScanned(true);
@@ -176,18 +209,62 @@ export default function NeuroCommercePage() {
     showToast(`✨ Spatial Match Placed: ${itemName}`);
   };
 
+  // Conversational In-Viewport AI Query Handler
+  const handleSearchQuery = useCallback((query: string) => {
+    setIsQueryProcessing(true);
+    const q = query.toLowerCase();
+
+    // Check budget limit in query (e.g. "under 600", "under $800")
+    const priceMatch = q.match(/under\s*\$?(\d+)/i);
+    const maxPrice = priceMatch ? parseInt(priceMatch[1], 10) : Infinity;
+
+    // Filter catalog
+    let matched = CATALOG_PRODUCTS.filter((p) => {
+      if (p.price_bundle > maxPrice) return false;
+      const terms = [
+        p.item_name.toLowerCase(),
+        p.category.toLowerCase(),
+        p.room_type?.toLowerCase() || "",
+        p.reasoning.toLowerCase(),
+        ...(p.available_finishes || []).map((f) => f.name.toLowerCase()),
+      ].join(" ");
+      return q.split(" ").some((w) => w.length > 2 && terms.includes(w));
+    });
+
+    if (matched.length === 0) {
+      matched = CATALOG_PRODUCTS.filter((p) => p.price_bundle <= maxPrice);
+    }
+
+    if (matched.length > 0) {
+      const primary = matched[0];
+      const alternatives = matched.slice(1, 8);
+      setRecommendedProducts(matched.slice(0, 8));
+      handleSelectProduct(primary);
+
+      const responseText = `Found ${matched.length} pieces matching '${query}'. Placed the ${primary.item_name} scaled to ${primary.dimensions_meters.width}m width clearance.`;
+      setVoiceSummary(responseText);
+      speechEngine.speak(responseText);
+      showToast(`AI Match: ${primary.item_name}`);
+    } else {
+      showToast("No direct matches found. Try another search term.");
+    }
+
+    setIsQueryProcessing(false);
+  }, []);
+
   const handleLoadSavedDesign = (saved: SavedRoomDesign) => {
     setSpatialAnalysis({
       estimated_room_type: saved.roomType as any,
       detected_wall_color: saved.wallColor,
       lighting_condition: saved.lightingCondition as any,
     });
-    setSelectedProduct(saved.primaryProduct);
+    handleSelectProduct(saved.primaryProduct);
     if (saved.alternativeProducts && saved.alternativeProducts.length > 0) {
       setRecommendedProducts(saved.alternativeProducts);
     }
     if (saved.voiceSummary) {
       setVoiceSummary(saved.voiceSummary);
+      speechEngine.speak(saved.voiceSummary);
     }
     if (saved.roomImage) {
       setCapturedRoomImage(saved.roomImage);
@@ -209,6 +286,8 @@ export default function NeuroCommercePage() {
             environmentHdri={currentHdri}
             boundingBox={selectedProduct.bounding_box_2d}
             productName={selectedProduct.item_name}
+            dimensions={selectedProduct.dimensions_meters}
+            activeFinishHex={activeFinishHex}
           />
         )}
 
@@ -220,7 +299,7 @@ export default function NeuroCommercePage() {
             roomType={spatialAnalysis.estimated_room_type}
             wallColor={spatialAnalysis.detected_wall_color}
             lightingCondition={spatialAnalysis.lighting_condition}
-            onSelectProduct={(p) => setSelectedProduct(p)}
+            onSelectProduct={(p) => handleSelectProduct(p)}
             onSwitchTo3D={() => setViewportMode("3d")}
           />
         )}
@@ -237,6 +316,7 @@ export default function NeuroCommercePage() {
           />
         )}
       </div>
+
 
       {/* Floating Success Toast */}
       {toastMessage && (
@@ -401,13 +481,27 @@ export default function NeuroCommercePage() {
         </div>
       </div>
 
+      {/* Floating In-Viewport AI Quick-Query Bar (Voice & Chat) */}
+      <div className="relative z-30 w-full mb-1">
+        <AIQuickQueryBar
+          onSearchQuery={handleSearchQuery}
+          isProcessing={isQueryProcessing}
+          voiceSummary={voiceSummary}
+        />
+      </div>
+
       {/* Bottom Area: SKU Swiper Carousel */}
       <footer className="relative z-30 w-full pointer-events-auto">
         <BottomSKUCarousel
           products={products}
           recommendedProducts={recommendedProducts}
           selectedSkuId={selectedProduct.sku_id}
-          onSelectProduct={(product) => setSelectedProduct(product)}
+          activeFinishHex={activeFinishHex}
+          onSelectProduct={handleSelectProduct}
+          onSelectFinish={(prod, finish) => {
+            setActiveFinishHex(finish.hex);
+            showToast(`Applied finish: ${finish.name}`);
+          }}
           onAddToCart={handleAddToCart}
           onAddAllBundle={handleAddAllBundle}
           voiceSummary={voiceSummary}

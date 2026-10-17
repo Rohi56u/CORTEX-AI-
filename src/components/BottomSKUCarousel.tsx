@@ -20,7 +20,9 @@ interface BottomSKUCarouselProps {
   products: SuggestedProduct[];
   recommendedProducts?: SuggestedProduct[];
   selectedSkuId: string;
+  activeFinishHex?: string;
   onSelectProduct: (product: SuggestedProduct) => void;
+  onSelectFinish?: (product: SuggestedProduct, finish: { name: string; hex: string }) => void;
   onAddToCart?: (product: SuggestedProduct) => void;
   onAddAllBundle?: () => void;
   voiceSummary?: string;
@@ -31,7 +33,9 @@ export default function BottomSKUCarousel({
   products,
   recommendedProducts = [],
   selectedSkuId,
+  activeFinishHex,
   onSelectProduct,
+  onSelectFinish,
   onAddToCart,
   onAddAllBundle,
   voiceSummary,
@@ -269,14 +273,29 @@ export default function BottomSKUCarousel({
                         <div className="flex items-center gap-1.5 mb-1.5">
                           <span className="text-[9px] text-slate-500 font-mono">Finishes:</span>
                           <div className="flex items-center gap-1">
-                            {product.available_finishes.slice(0, 4).map((f) => (
-                              <span
-                                key={f.name}
-                                title={f.name}
-                                className="w-2.5 h-2.5 rounded-full border border-slate-600/80 shrink-0"
-                                style={{ backgroundColor: f.hex }}
-                              />
-                            ))}
+                            {product.available_finishes.slice(0, 4).map((f) => {
+                              const isActive = isSelected && activeFinishHex === f.hex;
+                              return (
+                                <button
+                                  key={f.name}
+                                  type="button"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    onSelectProduct(product);
+                                    if (onSelectFinish) {
+                                      onSelectFinish(product, f);
+                                    }
+                                  }}
+                                  title={`${f.name} (Click to apply 3D material)`}
+                                  className={`w-3 h-3 rounded-full border transition-all active:scale-90 cursor-pointer shrink-0 ${
+                                    isActive
+                                      ? "ring-2 ring-cyan-400 scale-110 border-white shadow-[0_0_8px_#22d3ee]"
+                                      : "border-slate-600/80 hover:scale-110"
+                                  }`}
+                                  style={{ backgroundColor: f.hex }}
+                                />
+                              );
+                            })}
                           </div>
                         </div>
                       )}
