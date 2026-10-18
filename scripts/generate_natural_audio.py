@@ -72,7 +72,7 @@ SCRIPTS = [
         "id": "part7_outro",
         "text": (
             "CORTEX AI transforms spatial e-commerce from guesswork into an exact science. "
-            "A modern, one hundred percent production-ready platform, architected and built by Rohi. "
+            "Architected and built by Rohi. "
             "Experience the future of spatial commerce today. Thank you for watching."
         )
     }
@@ -96,7 +96,7 @@ async def main():
     for seg in SCRIPTS:
         sid = seg["id"]
         out = os.path.join(AUDIO_DIR, f"{sid}.mp3")
-        comm = edge_tts.Communicate(seg["text"], VOICE, rate="+3%") # crisp, energetic keynote pace
+        comm = edge_tts.Communicate(seg["text"], VOICE, rate="-6%") # calm, natural, unhurried pace
         await comm.save(out)
         d = get_duration(out)
         durations[sid] = d

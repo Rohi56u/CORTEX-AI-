@@ -58,9 +58,9 @@ async function runFastDemoPipeline() {
   }
 
   // ==========================================
-  // PART 1: SHORT PROBLEM HOOK & REVEAL (22.0s)
+  // PART 1: SHORT PROBLEM HOOK & REVEAL (24.5s)
   // ==========================================
-  console.log('\n🔴 Recording Part 1: Fast Problem Hook & Reveal (22.0s)...');
+  console.log('\n🔴 Recording Part 1: Fast Problem Hook & Reveal (24.5s)...');
   const part1Html = `
   <!DOCTYPE html>
   <html>
@@ -133,8 +133,8 @@ async function runFastDemoPipeline() {
   const recorderPart1 = new PuppeteerScreenRecorder(page, recordConfig);
   await recorderPart1.start(rawPart1);
 
-  // Play problem for 10s, then transform into CORTEX AI Reveal for 12s
-  await sleep(10000);
+  // Play problem for 11s, then transform into CORTEX AI Reveal for 13.5s
+  await sleep(11000);
   await page.evaluate(() => {
     document.getElementById('container').innerHTML = `
       <div style="display: flex; justify-content: space-between; align-items: center;">
@@ -167,15 +167,15 @@ async function runFastDemoPipeline() {
       </div>
     `;
   });
-  await sleep(12000);
+  await sleep(13500);
 
   await recorderPart1.stop();
-  mux(rawPart1, path.join(AUDIO_DIR, 'part1_problem_reveal.mp3'), path.join(VIDEO_DIR, 'final_part1.mp4'), 22.0);
+  mux(rawPart1, path.join(AUDIO_DIR, 'part1_problem_reveal.mp3'), path.join(VIDEO_DIR, 'final_part1.mp4'), 24.5);
 
   // ================================================================
-  // PART 2: LIVE 3D SPATIAL STUDIO & MATERIAL SWATCHES (15.0s)
+  // PART 2: LIVE 3D SPATIAL STUDIO & MATERIAL SWATCHES (16.5s)
   // ================================================================
-  console.log('\n🔴 Recording Part 2: 3D Spatial Studio & Material Swatches (15.0s)...');
+  console.log('\n🔴 Recording Part 2: 3D Spatial Studio & Material Swatches (16.5s)...');
   await page.goto('http://localhost:3000', { waitUntil: 'domcontentloaded' });
   await sleep(3000);
 
@@ -196,7 +196,7 @@ async function runFastDemoPipeline() {
     const dots = Array.from(document.querySelectorAll('button[title*="apply 3D material"]'));
     if (dots.length > 0) dots[0].click();
   });
-  await sleep(3000);
+  await sleep(3500);
 
   // Click Swatch 2 (Desert Ochre)
   await page.evaluate(() => {
@@ -217,15 +217,15 @@ async function runFastDemoPipeline() {
     const day = Array.from(document.querySelectorAll('button')).find((b) => b.textContent.includes('Day'));
     if (day) day.click();
   });
-  await sleep(1500);
+  await sleep(2500);
 
   await recorderPart2.stop();
-  mux(rawPart2, path.join(AUDIO_DIR, 'part2_3d_studio_swatches.mp3'), path.join(VIDEO_DIR, 'final_part2.mp4'), 15.0);
+  mux(rawPart2, path.join(AUDIO_DIR, 'part2_3d_studio_swatches.mp3'), path.join(VIDEO_DIR, 'final_part2.mp4'), 16.5);
 
   // ================================================================
-  // PART 3: 15-SEC ROOM SCANNER MODAL (15.0s)
+  // PART 3: 15-SEC ROOM SCANNER MODAL (16.7s)
   // ================================================================
-  console.log('\n🔴 Recording Part 3: 15-Sec Room Scanner Modal (15.0s)...');
+  console.log('\n🔴 Recording Part 3: 15-Sec Room Scanner Modal (16.7s)...');
   const rawPart3 = path.join(VIDEO_DIR, 'raw_part3.mp4');
   const recorderPart3 = new PuppeteerScreenRecorder(page, recordConfig);
   await recorderPart3.start(rawPart3);
@@ -242,29 +242,29 @@ async function runFastDemoPipeline() {
     const snap = Array.from(document.querySelectorAll('button')).find((b) => b.textContent.includes('Snap Photo'));
     if (snap) snap.click();
   });
-  await sleep(3000);
+  await sleep(3500);
 
   // 15s Video Sweep
   await page.evaluate(() => {
     const vid = Array.from(document.querySelectorAll('button')).find((b) => b.textContent.includes('15s Video'));
     if (vid) vid.click();
   });
-  await sleep(4000);
+  await sleep(4500);
 
   // Submit Analysis
   await page.evaluate(() => {
     const sub = Array.from(document.querySelectorAll('button')).find((b) => b.textContent.includes('Analyze Space'));
     if (sub) sub.click();
   });
-  await sleep(4500);
+  await sleep(5200);
 
   await recorderPart3.stop();
-  mux(rawPart3, path.join(AUDIO_DIR, 'part3_scanner.mp3'), path.join(VIDEO_DIR, 'final_part3.mp4'), 15.0);
+  mux(rawPart3, path.join(AUDIO_DIR, 'part3_scanner.mp3'), path.join(VIDEO_DIR, 'final_part3.mp4'), 16.7);
 
   // ================================================================
-  // PART 4: 3D DIMENSION RULERS & VOICE QUERY (14.6s)
+  // PART 4: 3D DIMENSION RULERS & VOICE QUERY (16.1s)
   // ================================================================
-  console.log('\n🔴 Recording Part 4: 3D Dimension Rulers & Voice Query (14.6s)...');
+  console.log('\n🔴 Recording Part 4: 3D Dimension Rulers & Voice Query (16.1s)...');
   await page.evaluate(() => {
     const b3d = Array.from(document.querySelectorAll('button')).find((b) => b.textContent.includes('3D'));
     if (b3d) b3d.click();
@@ -302,22 +302,22 @@ async function runFastDemoPipeline() {
     }, query[i]);
     await sleep(40);
   }
-  await sleep(1500);
+  await sleep(2000);
 
   // Send Query
   await page.evaluate(() => {
     const form = document.querySelector('form');
     if (form) form.dispatchEvent(new Event('submit', { cancelable: true, bubbles: true }));
   });
-  await sleep(5500);
+  await sleep(9800);
 
   await recorderPart4.stop();
-  mux(rawPart4, path.join(AUDIO_DIR, 'part4_rulers_voice.mp3'), path.join(VIDEO_DIR, 'final_part4.mp4'), 14.6);
+  mux(rawPart4, path.join(AUDIO_DIR, 'part4_rulers_voice.mp3'), path.join(VIDEO_DIR, 'final_part4.mp4'), 16.1);
 
   // ================================================================
-  // PART 5: PLACEMENT BLUEPRINT & AI STAGING (16.0s)
+  // PART 5: PLACEMENT BLUEPRINT & AI STAGING (17.6s)
   // ================================================================
-  console.log('\n🔴 Recording Part 5: Placement Blueprint & AI Staging (16.0s)...');
+  console.log('\n🔴 Recording Part 5: Placement Blueprint & AI Staging (17.6s)...');
   const rawPart5 = path.join(VIDEO_DIR, 'raw_part5.mp4');
   const recorderPart5 = new PuppeteerScreenRecorder(page, recordConfig);
   await recorderPart5.start(rawPart5);
@@ -327,14 +327,14 @@ async function runFastDemoPipeline() {
     const p = Array.from(document.querySelectorAll('button')).find((b) => b.textContent.includes('Placement') || b.textContent.includes('Plan'));
     if (p) p.click();
   });
-  await sleep(5000);
+  await sleep(5500);
 
   // Switch to AI Staging mode
   await page.evaluate(() => {
     const s = Array.from(document.querySelectorAll('button')).find((b) => b.textContent.includes('AI Staging') || b.textContent.includes('Staging'));
     if (s) s.click();
   });
-  await sleep(3000);
+  await sleep(3500);
 
   // Click Generate Staging
   await page.evaluate(() => {
@@ -348,20 +348,20 @@ async function runFastDemoPipeline() {
     const eye = Array.from(document.querySelectorAll('button')).find(b => b.textContent.includes('Hold for Before'));
     if (eye) eye.dispatchEvent(new MouseEvent('mousedown'));
   });
-  await sleep(1500);
+  await sleep(1600);
   await page.evaluate(() => {
     const eye = Array.from(document.querySelectorAll('button')).find(b => b.textContent.includes('Hold for Before'));
     if (eye) eye.dispatchEvent(new MouseEvent('mouseup'));
   });
-  await sleep(2000);
+  await sleep(2500);
 
   await recorderPart5.stop();
-  mux(rawPart5, path.join(AUDIO_DIR, 'part5_placement_staging.mp3'), path.join(VIDEO_DIR, 'final_part5.mp4'), 16.0);
+  mux(rawPart5, path.join(AUDIO_DIR, 'part5_placement_staging.mp3'), path.join(VIDEO_DIR, 'final_part5.mp4'), 17.6);
 
   // ================================================================
-  // PART 6: WHITE-GLOVE DELIVERY CHECKOUT (14.1s)
+  // PART 6: WHITE-GLOVE DELIVERY CHECKOUT (15.5s)
   // ================================================================
-  console.log('\n🔴 Recording Part 6: White-Glove Delivery Checkout (14.1s)...');
+  console.log('\n🔴 Recording Part 6: White-Glove Delivery Checkout (15.5s)...');
   const rawPart6 = path.join(VIDEO_DIR, 'raw_part6.mp4');
   const recorderPart6 = new PuppeteerScreenRecorder(page, recordConfig);
   await recorderPart6.start(rawPart6);
@@ -377,29 +377,29 @@ async function runFastDemoPipeline() {
     const cart = document.querySelector('button[title*="Cart"]') || Array.from(document.querySelectorAll('button')).find(b => b.querySelector('svg.lucide-shopping-bag'));
     if (cart) cart.click();
   });
-  await sleep(2500);
+  await sleep(3000);
 
   // Configure White-Glove
   await page.evaluate(() => {
     const del = Array.from(document.querySelectorAll('button')).find((b) => b.textContent.includes('White-Glove Delivery'));
     if (del) del.click();
   });
-  await sleep(3500);
+  await sleep(4000);
 
   // Complete Order
   await page.evaluate(() => {
     const auth = Array.from(document.querySelectorAll('button')).find((b) => b.textContent.includes('Authorize & Dispatch'));
     if (auth) auth.click();
   });
-  await sleep(7000);
+  await sleep(7500);
 
   await recorderPart6.stop();
-  mux(rawPart6, path.join(AUDIO_DIR, 'part6_checkout.mp3'), path.join(VIDEO_DIR, 'final_part6.mp4'), 14.1);
+  mux(rawPart6, path.join(AUDIO_DIR, 'part6_checkout.mp3'), path.join(VIDEO_DIR, 'final_part6.mp4'), 15.5);
 
   // ================================================================
-  // PART 7: OUTRO (NO EMAIL/URL SPOKEN, CLEAN CARDS) (16.2s)
+  // PART 7: OUTRO (NO EMAIL/URL SPOKEN, CLEAN CARDS) (14.6s)
   // ================================================================
-  console.log('\n🔴 Recording Part 7: Clean Outro (16.2s)...');
+  console.log('\n🔴 Recording Part 7: Clean Outro (14.6s)...');
   const part7Html = `
   <!DOCTYPE html>
   <html>
@@ -464,9 +464,9 @@ async function runFastDemoPipeline() {
   const rawPart7 = path.join(VIDEO_DIR, 'raw_part7.mp4');
   const recorderPart7 = new PuppeteerScreenRecorder(page, recordConfig);
   await recorderPart7.start(rawPart7);
-  await sleep(16000);
+  await sleep(14600);
   await recorderPart7.stop();
-  mux(rawPart7, path.join(AUDIO_DIR, 'part7_outro.mp3'), path.join(VIDEO_DIR, 'final_part7.mp4'), 16.2);
+  mux(rawPart7, path.join(AUDIO_DIR, 'part7_outro.mp3'), path.join(VIDEO_DIR, 'final_part7.mp4'), 14.6);
 
   await browser.close();
   console.log('✅ All 7 screen-recorded segments recorded & muxed with ultra-natural voiceover!');
